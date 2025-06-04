@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "794022160339",
+    "project_id": "speeriq-aa2f4",
+    "storage_bucket": "speeriq-aa2f4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:794022160339:android:01bae7a0712eca7dfbb126",
+        "android_client_info": {
+          "package_name": "com.waelabohamza.ecommercecourse"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYIoQt56cThEbUJ7Pp0x5N6zZr-u9nKrM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
