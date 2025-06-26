@@ -1,19 +1,31 @@
-platform :ios, '13.0'
+﻿platform :ios, '13.0'
 
 target 'Runner' do
-  use_frameworks!
-  use_modular_headers!
+  use_frameworks!use_modular_headers!
 
-  flutter_root = File.dirname(File.realpath(__FILE__))
-  require File.join(flutter_root, 'Flutter', 'podhelper.rb')
-
-  install_all_flutter_pods(flutter_root)
+  # استخدام Pod مباشرة
+  pod 'Flutter', :path => 'Flutter'
+  
+  # قراءة المكونات الإضافية
+  flutter_application_path = File.dirname(File.dirname(File.realpath(__FILE__)))plugin_pods_path = File.join(flutter_application_path, '.flutter-plugins')
+  
+  if File.exist?(plugin_pods_path)
+    File.foreach(plugin_pods_path) { |line|
+      plugin = line.split('=')
+      if plugin.length ==2
+        name = plugin[0].strip()
+        path = plugin[1].strip()
+        spec_path = "#{path}/ios/#{name}.podspec"
+        if File.exist?(spec_path)
+          pod name, :path => File.join('..', path, 'ios')
+        endend
+    }
+  end
 end
 
 post_install do |installer|
   installer.pods_project.targets.each do |target|
-    # يفصل السطر بين استدعاء الإعدادات الإضافية وبين حلقة الإعدادات
-    flutter_additional_ios_build_settings(target)
+    flutter_additional_ios_build_settings(target) if defined?(flutter_additional_ios_build_settings)
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
     end
