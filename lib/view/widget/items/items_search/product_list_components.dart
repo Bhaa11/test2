@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -61,10 +63,13 @@ class ProductListComponents {
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 0,
-        mainAxisSpacing: 7,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
         childAspectRatio: 0.72,
       ),
+      cacheExtent: 1000,
+      addAutomaticKeepAlives: true,
+      addRepaintBoundaries: true,
       itemBuilder: (context, index) {
         final item = items[index];
         return animation
@@ -75,11 +80,11 @@ class ProductListComponents {
           child: ScaleAnimation(
             scale: 0.95,
             child: FadeInAnimation(
-              child: _buildProductCard(context, item, onTap),
+              child: _buildProductCard(context, item, onTap, index),
             ),
           ),
         )
-            : _buildProductCard(context, item, onTap);
+            : _buildProductCard(context, item, onTap, index);
       },
     );
   }
@@ -94,7 +99,10 @@ class ProductListComponents {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-      separatorBuilder: (context, index) => const SizedBox(height: 0),
+      separatorBuilder: (context, index) => const SizedBox(height: 8),
+      cacheExtent: 1500,
+      addAutomaticKeepAlives: true,
+      addRepaintBoundaries: true,
       itemBuilder: (context, index) {
         final item = items[index];
         return animation
@@ -104,11 +112,11 @@ class ProductListComponents {
           child: SlideAnimation(
             horizontalOffset: 50,
             child: FadeInAnimation(
-              child: _buildListItemCard(context, item, onTap),
+              child: _buildListItemCard(context, item, onTap, index),
             ),
           ),
         )
-            : _buildListItemCard(context, item, onTap);
+            : _buildListItemCard(context, item, onTap, index);
       },
     );
   }
@@ -175,8 +183,7 @@ class ProductListComponents {
                 // يمكن إضافة وظيفة للذهاب إلى صفحة التصفح
               },
               style: ElevatedButton.styleFrom(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -190,8 +197,9 @@ class ProductListComponents {
   }
 
   static Widget _buildProductCard(
-      BuildContext context, ItemsModel item, Function(ItemsModel) onTap) {
+      BuildContext context, ItemsModel item, Function(ItemsModel) onTap, int index) {
     final theme = Theme.of(context);
+    String firstImage = ProductUtils.getFirstImage(item.itemsImage);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -205,7 +213,7 @@ class ProductListComponents {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // صورة المنتج
-            _buildProductImage(item, context),
+            _buildProductImage(item, context, firstImage, index),
 
             // معلومات المنتج
             Expanded(
@@ -221,7 +229,7 @@ class ProductListComponents {
                         fontWeight: FontWeight.w600,
                         height: 1.2,
                       ),
-                      maxLines: 1, // تغيير من 2 إلى 1
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 10),
@@ -289,7 +297,9 @@ class ProductListComponents {
   }
 
   static Widget _buildListItemCard(
-      BuildContext context, ItemsModel item, Function(ItemsModel) onTap) {
+      BuildContext context, ItemsModel item, Function(ItemsModel) onTap, int index) {
+    String firstImage = ProductUtils.getFirstImage(item.itemsImage);
+
     return Card(
       elevation: 1.5,
       shape: RoundedRectangleBorder(
@@ -299,23 +309,29 @@ class ProductListComponents {
         onTap: () => onTap(item),
         borderRadius: BorderRadius.circular(10),
         child: Padding(
-          padding: const EdgeInsets.all(0),
+          padding: const EdgeInsets.all(8),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // صورة المنتج - بدون شارات
+              // صورة المنتج
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: SizedBox(
                   width: 130,
                   height: 130,
-                  child: CachedNetworkImage(
-                    imageUrl: "${AppLink.imagestItems}/${item.itemsImage}",
+                  child: firstImage.isNotEmpty
+                      ? CachedNetworkImage(
+                    imageUrl: "${AppLink.imagestItems}/$firstImage",
                     fit: BoxFit.cover,
                     placeholder: (context, url) => _buildImageShimmer(),
-                    errorWidget: (context, url, error) =>
-                        _buildImageErrorWidget(),
-                  ),
+                    errorWidget: (context, url, error) => _buildImageErrorWidget(),
+                    memCacheWidth: 300,
+                    memCacheHeight: 300,
+                    maxWidthDiskCache: 300,
+                    maxHeightDiskCache: 300,
+                    fadeInDuration: const Duration(milliseconds: 300),
+                  )
+                      : _buildImageErrorWidget(),
                 ),
               ),
 
@@ -334,7 +350,7 @@ class ProductListComponents {
                         color: Colors.black,
                         fontSize: 14,
                       ),
-                      maxLines: 1, // تغيير من 2 إلى 1
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
 
@@ -346,7 +362,7 @@ class ProductListComponents {
                       children: [
                         // مساحة ثابتة للسعر قبل الخصم
                         Container(
-                          height: 16, // ارتفاع ثابت
+                          height: 16,
                           child: ProductUtils.hasDiscount(item)
                               ? Text(
                             "${ProductUtils.getOriginalPrice(item)} د.ع",
@@ -356,7 +372,7 @@ class ProductListComponents {
                               fontSize: 12,
                             ),
                           )
-                              : const SizedBox(), // مساحة فارغة بنفس الارتفاع
+                              : const SizedBox(),
                         ),
 
                         // مسافة ثابتة بين السعرين
@@ -404,19 +420,27 @@ class ProductListComponents {
     );
   }
 
-  static Widget _buildProductImage(ItemsModel item, BuildContext context) {
+  static Widget _buildProductImage(ItemsModel item, BuildContext context, String firstImage, int index) {
     return AspectRatio(
       aspectRatio: 1.2,
       child: Stack(
         fit: StackFit.expand,
         children: [
           // صورة المنتج
-          CachedNetworkImage(
-            imageUrl: "${AppLink.imagestItems}/${item.itemsImage}",
+          firstImage.isNotEmpty
+              ? CachedNetworkImage(
+            imageUrl: "${AppLink.imagestItems}/$firstImage",
             fit: BoxFit.cover,
             placeholder: (context, url) => _buildImageShimmer(),
             errorWidget: (context, url, error) => _buildImageErrorWidget(),
-          ),
+            memCacheWidth: 400,
+            memCacheHeight: 400,
+            maxWidthDiskCache: 400,
+            maxHeightDiskCache: 400,
+            fadeInDuration: const Duration(milliseconds: 300),
+            fadeOutDuration: const Duration(milliseconds: 300),
+          )
+              : _buildImageErrorWidget(),
 
           // الشارات باستخدام النظام الجديد
           Positioned(
@@ -445,6 +469,12 @@ class ProductListComponents {
           stops: const [0.1, 0.5, 0.9],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
+        ),
+      ),
+      child: const Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(AppColor.primaryColor),
         ),
       ),
     );
@@ -491,6 +521,50 @@ class ProductListComponents {
 
 class ProductUtils {
   static final NumberFormat formatter = NumberFormat('#,##0');
+
+  // دالة محسنة لاستخراج الصورة الأولى
+  static String getFirstImage(String? itemsImage) {
+    if (itemsImage == null || itemsImage.isEmpty) {
+      return '';
+    }
+
+    try {
+      // محاولة تحليل JSON أولاً
+      if (itemsImage.startsWith('{') || itemsImage.startsWith('[')) {
+        dynamic imageData = json.decode(itemsImage);
+
+        if (imageData is Map<String, dynamic>) {
+          // التحقق من وجود مصفوفة الصور
+          if (imageData.containsKey('images') && imageData['images'] is List) {
+            List images = imageData['images'];
+            if (images.isNotEmpty) {
+              return images[0].toString().trim();
+            }
+          }
+        } else if (imageData is List) {
+          // إذا كانت البيانات عبارة عن مصفوفة مباشرة
+          if (imageData.isNotEmpty) {
+            return imageData[0].toString().trim();
+          }
+        }
+      } else {
+        // التعامل مع الصور المفصولة بفاصلة
+        List<String> imagesList = itemsImage.split(',');
+        if (imagesList.isNotEmpty) {
+          return imagesList[0].trim();
+        }
+      }
+
+      return '';
+    } catch (e) {
+      print('Error parsing image data: $e');
+      // في حالة فشل تحليل JSON، إرجاع النص كما هو
+      if (itemsImage.contains(',')) {
+        return itemsImage.split(',')[0].trim();
+      }
+      return itemsImage.trim();
+    }
+  }
 
   static bool hasDiscount(ItemsModel item) {
     if (item.itemsDiscount == null) return false;

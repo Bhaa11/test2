@@ -36,7 +36,7 @@ class BottomNavgationBarCart extends GetView<CartController> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // مؤشر سحب
+// مؤشر سحب
           Container(
             margin: EdgeInsets.only(top: 8, bottom: 4),
             height: 4,
@@ -64,28 +64,37 @@ class BottomNavgationBarCart extends GetView<CartController> {
   }
 
   Widget _buildAddressAndPayment(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          flex: 1,
-          child: _buildInfoCard(
-            icon: Icons.location_on,
-            title: "العنوان",
-            onTap: () => _showAddressBottomSheet(context),
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            flex: 1,
+            child: GetBuilder<CartController>(
+              builder: (controller) => _buildInfoCard(
+                icon: Icons.location_on,
+                title: "العنوان".tr,
+                description: controller.selectedAddressId.isNotEmpty && controller.addresses.isNotEmpty
+                    ? "${controller.addresses.firstWhere((address) => address.addressId.toString() == controller.selectedAddressId).addressCity} ${controller.addresses.firstWhere((address) => address.addressId.toString() == controller.selectedAddressId).addressStreet}"
+                    : "لم يتم اختيار عنوان".tr,
+                onTap: () => _showAddressBottomSheet(context),
+              ),
+            ),
           ),
-        ),
-        SizedBox(width: 12),
-        Expanded(
-          flex: 1,
-          child: _buildInfoCard(
-            icon: Icons.payments_outlined,
-            title: "الدفع",
-            description: "عند الاستلام",
+          SizedBox(width: 12),
+          Expanded(
+            flex: 1,
+            child: _buildInfoCard(
+              icon: Icons.payments_outlined,
+              title: "الدفع".tr,
+              description: "عند الاستلام".tr,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
+
 
   Widget _buildInfoCard({
     required IconData icon,
@@ -143,6 +152,8 @@ class BottomNavgationBarCart extends GetView<CartController> {
                   fontSize: 12,
                   color: Colors.grey[600],
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ],
@@ -168,14 +179,14 @@ class BottomNavgationBarCart extends GetView<CartController> {
       ),
       child: Column(
         children: [
-          _buildPriceRow("سعر المنتجات", price),
+          _buildPriceRow("سعر المنتجات".tr, price),
           SizedBox(height: 10),
-          _buildPriceRow("رسوم التوصيل", shipping),
+          _buildPriceRow("رسوم التوصيل".tr, shipping),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Divider(color: Colors.grey[300]),
           ),
-          _buildPriceRow("المبلغ الإجمالي", totalprice, isTotal: true),
+          _buildPriceRow("المبلغ الإجمالي".tr, totalprice, isTotal: true),
         ],
       ),
     );
@@ -194,7 +205,7 @@ class BottomNavgationBarCart extends GetView<CartController> {
           ),
         ),
         Text(
-          "$value د.ع",
+          "$value " + "د.ع".tr,
           style: TextStyle(
             fontSize: isTotal ? 16 : 14,
             color: isTotal ? AppColor.primaryColor : Colors.black,
@@ -227,7 +238,7 @@ class BottomNavgationBarCart extends GetView<CartController> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "تأكيد الطلب",
+              "تأكيد الطلب".tr,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -246,7 +257,7 @@ class BottomNavgationBarCart extends GetView<CartController> {
     );
   }
 
-  // عرض قائمة العناوين في صفحة منبثقة
+// عرض قائمة العناوين في صفحة منبثقة
   void _showAddressBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -263,7 +274,7 @@ class BottomNavgationBarCart extends GetView<CartController> {
               ),
               child: Column(
                 children: [
-                  // مؤشر سحب
+// مؤشر سحب
                   Container(
                     margin: EdgeInsets.only(top: 12, bottom: 8),
                     height: 4,
@@ -274,30 +285,19 @@ class BottomNavgationBarCart extends GetView<CartController> {
                     ),
                   ),
 
-                  // رأس الصفحة
+// رأس الصفحة
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "اختيار العنوان",
+                          "اختيار العنوان".tr,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: AppColor.grey2,
                           ),
-                        ),
-                        IconButton(
-                          onPressed: () => Get.toNamed(
-                            AppRoute.addressadddetails,
-                            arguments: {'fromCart': true},
-                          ),
-                          icon: Icon(
-                            Icons.add_circle_outline,
-                            color: AppColor.primaryColor,
-                          ),
-                          tooltip: "إضافة عنوان جديد",
                         ),
                       ],
                     ),
@@ -305,27 +305,31 @@ class BottomNavgationBarCart extends GetView<CartController> {
 
                   Divider(),
 
-                  // قائمة العناوين
+// قائمة العناوين
                   controller.addresses.isEmpty
                       ? Expanded(child: _buildEmptyAddressIndicator())
                       : Expanded(child: _buildAddressList(controller)),
 
-                  // زر الإغلاق
+// زر إضافة عنوان
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
+                      child: ElevatedButton.icon(
+                        onPressed: () => Get.toNamed(
+                          AppRoute.addressadddetails,
+                          arguments: {'fromCart': true},
+                        ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColor.grey2,
+                          backgroundColor: AppColor.primaryColor,
                           padding: EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: Text(
-                          "إغلاق",
+                        icon: Icon(Icons.add_location_alt_outlined),
+                        label: Text(
+                          "إضافة عنوان".tr,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -334,6 +338,7 @@ class BottomNavgationBarCart extends GetView<CartController> {
                       ),
                     ),
                   ),
+
                 ],
               ),
             );
@@ -355,7 +360,7 @@ class BottomNavgationBarCart extends GetView<CartController> {
           ),
           SizedBox(height: 16),
           Text(
-            "لا توجد عناوين محفوظة",
+            "لا توجد عناوين محفوظة".tr,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -364,7 +369,7 @@ class BottomNavgationBarCart extends GetView<CartController> {
           ),
           SizedBox(height: 8),
           Text(
-            "قم بإضافة عنوان لإتمام الطلب",
+            "قم بإضافة عنوان لإتمام الطلب".tr,
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[600],
@@ -377,7 +382,7 @@ class BottomNavgationBarCart extends GetView<CartController> {
               arguments: {'fromCart': true},
             ),
             icon: Icon(Icons.add_location_alt),
-            label: Text("إضافة عنوان"),
+            label: Text("إضافة عنوان".tr),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColor.primaryColor,
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),

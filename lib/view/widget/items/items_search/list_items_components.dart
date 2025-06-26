@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../../data/model/itemsmodel.dart';
 
 class ProductSearchFilter {
@@ -88,7 +89,7 @@ class ProductSearchFilter {
     return TextField(
       controller: searchController,
       decoration: InputDecoration(
-        hintText: "ابحث عن منتج...",
+        hintText: "ابحث عن منتج...".tr,
         prefixIcon: const Icon(Icons.search),
         suffixIcon: searchController.text.isNotEmpty
             ? IconButton(
@@ -124,8 +125,8 @@ class ProductSearchFilter {
         size: 16,
         color: Colors.grey[700],
       ),
-      label: const Text(
-        "ترتيب",
+      label:  Text(
+        "ترتيب".tr,
         style: TextStyle(fontSize: 12),
       ),
       style: OutlinedButton.styleFrom(
@@ -255,7 +256,7 @@ class ProductSearchFilter {
               onPressed: onReset,
               icon: Icon(Icons.refresh_rounded, size: 16, color: Colors.blue[700]),
               label: Text(
-                "إعادة ضبط",
+                "إعادة ضبط".tr,
                 style: TextStyle(
                   color: Colors.blue[700],
                   fontSize: 13,
@@ -273,10 +274,10 @@ class ProductSearchFilter {
         required Function(String) onSortSelected,
       }) {
     final sortOptions = [
-      'السعر: من الأقل للأعلى',
-      'السعر: من الأعلى للأقل',
-      'الخصم: من الأعلى للأقل',
-      'الأحدث أولاً',
+      'السعر: من الأقل للأعلى'.tr,
+      'السعر: من الأعلى للأقل'.tr,
+      'الخصم: من الأعلى للأقل'.tr,
+      'الأحدث أولاً'.tr,
     ];
 
     showModalBottomSheet(
@@ -294,8 +295,8 @@ class ProductSearchFilter {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  "ترتيب المنتجات",
+                Text(
+                  "ترتيب المنتجات".tr,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

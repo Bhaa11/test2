@@ -34,6 +34,7 @@ class AppRoute {
   static const String itemsview = "/itemsview";
   static const String itemsadd = "/itemsadd";
   static const String itemsedit = "/itemsedit";
+  static const String language = "/language";
 
 
 
@@ -51,6 +52,7 @@ class AppRoute {
   static const String mywallet = "/mywallet";
   static const String sellerratingsview = "/sellerratingsview";
   static const String sellersetails = "/sellersetails";
+
 
 
 

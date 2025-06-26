@@ -2,6 +2,7 @@ import 'package:ecommercecourse/controller/home_controller.dart';
 import 'package:ecommercecourse/core/constant/color.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/constant/imgaeasset.dart';
 
 class CustomCardHome extends GetView<HomeControllerImp> {
   final String title;
@@ -21,94 +22,115 @@ class CustomCardHome extends GetView<HomeControllerImp> {
     return Container(
       width: screenWidth * 0.92,
       margin: const EdgeInsets.symmetric(vertical: 15),
-      padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
-        color: AppColor.primaryColor,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: AppColor.secondColor.withOpacity(0.3),
-            blurRadius: 15,
-            spreadRadius: 2,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColor.primaryColor,
-            AppColor.secondColor.withOpacity(0.9),
+            AppColor.secondColor,
+            AppColor.primaryColor.withOpacity(0.95),
           ],
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColor.secondColor.withOpacity(0.3),
+            blurRadius: 12,
+            spreadRadius: 1,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Stack(
         children: [
-          // Decorative elements
+          // Background tire pattern
           Positioned(
-            top: -10,
-            right: isRTL ? null : -15,
-            left: isRTL ? -15 : null,
+            bottom: -15,
+            right: isRTL ? null : -20,
+            left: isRTL ? -20 : null,
             child: Opacity(
-              opacity: 0.1,
-              child: Icon(
-                Icons.star_rounded,
-                size: 120,
-                color: AppColor.fourthColor,
+              opacity: 0.08,
+              child: Image.asset(
+                AppImageAsset.iconhomeImage, // Use a tire pattern image
+                width: 180,
+                height: 180,
+                fit: BoxFit.contain,
               ),
             ),
           ),
 
-          // Content
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title.toUpperCase(),
-                style: TextStyle(
-                  color: AppColor.black,
-                  fontSize: screenWidth * 0.065,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
-                  height: 1.2,
+
+
+          Padding(
+            padding: const EdgeInsets.all(25),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title with icon
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        title.toUpperCase(),
+                        style: TextStyle(
+                          color: AppColor.white,
+                          fontSize: screenWidth * 0.055,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.1,
+                          height: 1.3,
+                          shadows: [
+                            Shadow(
+                              blurRadius: 2,
+                              color: Colors.black.withOpacity(0.2),
+                              offset: const Offset(1, 1),
+                            )
+                          ],
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
 
-              const SizedBox(height: 15),
+                const SizedBox(height: 20),
 
-              Text(
-                body,
-                style: TextStyle(
-                  color: AppColor.grey2,
-                  fontSize: screenWidth * 0.045,
-                  fontWeight: FontWeight.w600,
-                  height: 1.4,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-
-              const SizedBox(height: 20),
-
-              // Promotional Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColor.fourthColor.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Text(
-                  'Special Offer'.tr,
+                // Body text
+                Text(
+                  body,
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: screenWidth * 0.035,
-                    fontWeight: FontWeight.bold,
+                    color: AppColor.white.withOpacity(0.9),
+                    fontSize: screenWidth * 0.037,
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 25),
+
+                // Shop Now Button
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColor.primaryColor,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        )
+                      ],
+                    ),
                   ),
                 ),
-              )
-            ],
+              ],
+            ),
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import '../../../core/constant/color.dart';
 
 class CarSelectionDialog extends StatefulWidget {
@@ -202,7 +203,7 @@ class _CarSelectionDialogState extends State<CarSelectionDialog>
               ),
               const SizedBox(height: 14),
               Text(
-                'حدد نوع سيارتك',
+                'حدد نوع سيارتك'.tr,
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -211,7 +212,7 @@ class _CarSelectionDialogState extends State<CarSelectionDialog>
               ),
               const SizedBox(height: 4),
               Text(
-                'سنعرض لك جميع قطع الغيار المتوافقة',
+                'سنعرض لك جميع قطع الغيار المتوافقة'.tr,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -232,21 +233,21 @@ class _CarSelectionDialogState extends State<CarSelectionDialog>
         children: [
           _buildStepIndicator(
               1,
-              'الشركة',
+              'الشركة'.tr,
               selectedCompany != null,
               isActive: true
           ),
           _buildStepConnector(selectedCompany != null),
           _buildStepIndicator(
               2,
-              'الموديل',
+              'الموديل'.tr,
               selectedModel != null,
               isActive: selectedCompany != null
           ),
           _buildStepConnector(selectedModel != null),
           _buildStepIndicator(
               3,
-              'السنة',
+              'السنة'.tr,
               selectedYear != null,
               isActive: selectedModel != null
           ),
@@ -318,9 +319,9 @@ class _CarSelectionDialogState extends State<CarSelectionDialog>
       children: [
         _buildSelector(
           icon: Icons.business_rounded,
-          title: 'الشركة المصنعة',
+          title: 'الشركة المصنعة'.tr,
           value: selectedCompany,
-          hint: 'اختر الشركة المصنعة',
+          hint: 'اختر الشركة المصنعة'.tr,
           items: widget.carData.keys.toList(),
           onSelected: (value) {
             setState(() {
@@ -334,9 +335,9 @@ class _CarSelectionDialogState extends State<CarSelectionDialog>
         const SizedBox(height: 16),
         _buildSelector(
           icon: Icons.directions_car_filled,
-          title: 'موديل السيارة',
+          title: 'موديل السيارة'.tr,
           value: selectedModel,
-          hint: 'اختر الموديل',
+          hint: 'اختر الموديل'.tr,
           items: selectedCompany != null ? widget.carData[selectedCompany]!.keys.toList() : [],
           onSelected: (value) {
             setState(() {
@@ -349,9 +350,9 @@ class _CarSelectionDialogState extends State<CarSelectionDialog>
         const SizedBox(height: 16),
         _buildSelector(
           icon: Icons.calendar_today_rounded,
-          title: 'سنة الصنع',
+          title: 'سنة الصنع'.tr,
           value: selectedYear,
-          hint: 'اختر سنة الصنع',
+          hint: 'اختر سنة الصنع'.tr,
           items: selectedModel != null
               ? widget.carData[selectedCompany]![selectedModel]!
               : [],
@@ -511,7 +512,7 @@ class _CarSelectionDialogState extends State<CarSelectionDialog>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'تأكيد الاختيار',
+                  'تأكيد الاختيار'.tr,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -663,7 +664,7 @@ class _SelectionSheetState extends State<_SelectionSheet> with SingleTickerProvi
                         },
                       ),
                       Text(
-                        "اختر ${widget.title}",
+                        "اختر".tr + " ${widget.title}",
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 20,
@@ -700,7 +701,7 @@ class _SelectionSheetState extends State<_SelectionSheet> with SingleTickerProvi
                   textAlign: TextAlign.right,
                   style: const TextStyle(fontSize: 16),
                   decoration: InputDecoration(
-                    hintText: 'ابحث عن ${widget.title}...',
+                    hintText: 'ابحث عن'.tr + ' ${widget.title}...',
                     prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 22),
                     suffixIcon: query.isNotEmpty
                         ? IconButton(
@@ -740,7 +741,7 @@ class _SelectionSheetState extends State<_SelectionSheet> with SingleTickerProvi
                     Icon(Icons.search_off, size: 54, color: Colors.grey.shade300),
                     const SizedBox(height: 12),
                     Text(
-                      'لا توجد نتائج للبحث',
+                      'لا توجد نتائج للبحث'.tr,
                       style: TextStyle(
                         color: Colors.grey.shade500,
                         fontSize: 16,
@@ -749,7 +750,7 @@ class _SelectionSheetState extends State<_SelectionSheet> with SingleTickerProvi
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'جرب كلمات بحث أخرى',
+                      'جرب كلمات بحث أخرى'.tr,
                       style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                     ),
                   ],

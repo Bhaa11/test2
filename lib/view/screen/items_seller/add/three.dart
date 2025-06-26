@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../../controller/items_seller/add_controller.dart';
+import '../../../../controller/home_controller.dart';
 import '../../../../core/constant/color.dart';
 
 class ItemsAddStepThree extends StatefulWidget {
@@ -13,14 +14,9 @@ class ItemsAddStepThree extends StatefulWidget {
 }
 
 class _ItemsAddStepThreeState extends State<ItemsAddStepThree> {
-  final List<String> manufacturers = ['الكل', 'فورد', 'تويوتا', 'كيا'];
-  final Map<String, List<String>> modelsByManufacturer = {
-    'الكل': ['الكل'],
-    'فورد': ['الكل', 'موستنك', 'فوكوس', 'اكسبلورر'],
-    'تويوتا': ['الكل', 'كورولا', 'كامري', 'راف فور'],
-    'كيا': ['الكل', 'سبورتاج', 'سيراتو', 'موهافي'],
-  };
-  final List<String> years = ['الكل'] + List.generate(8, (i) => (2024 - i).toString());
+  late final List<String> manufacturers;
+  late final Map<String, List<String>> modelsByManufacturer;
+  late final List<String> years;
 
   String? selectedManufacturer;
   String? selectedModel;
@@ -28,8 +24,61 @@ class _ItemsAddStepThreeState extends State<ItemsAddStepThree> {
 
   bool showPublishButton = false;
   bool isAllSelected = false;
+  bool showManufacturerError = false;
+  bool showModelError = false;
 
   final controller = Get.find<ItemsAddController>();
+  final homeController = Get.find<HomeControllerImp>();
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeCarData();
+    // تحديث حالة الزر بناءً على وجود سيارات مضافة مسبقاً
+    showPublishButton = controller.carVariants.isNotEmpty;
+  }
+
+  void _initializeCarData() {
+    // التحقق من تحميل بيانات السيارات
+    if (!homeController.carDataLoaded) {
+      // في حالة عدم تحميل البيانات، استخدم بيانات افتراضية
+      manufacturers = ['الكل'];
+      modelsByManufacturer = {'الكل': ['الكل']};
+      years = ['الكل'] + List.generate(8, (i) => (2024 - i).toString());
+      return;
+    }
+
+    // Initialize manufacturers with "الكل" first
+    manufacturers = ['الكل'] + homeController.carData.keys.toList();
+
+    // Initialize models map with "الكل" for each manufacturer
+    modelsByManufacturer = {
+      'الكل': ['الكل'],
+    };
+
+    // Add models for each manufacturer
+    homeController.carData.forEach((manufacturer, models) {
+      modelsByManufacturer[manufacturer] = ['الكل'] + models.keys.toList();
+    });
+
+    // Initialize years with "الكل" first
+    years = ['الكل'] + List.generate(8, (i) => (2024 - i).toString());
+  }
+
+  List<String> _getYearsForModel() {
+    if (selectedManufacturer != null &&
+        selectedModel != null &&
+        selectedManufacturer != 'الكل' &&
+        selectedModel != 'الكل' &&
+        homeController.carDataLoaded) {
+
+      final manufacturerData = homeController.carData[selectedManufacturer];
+      if (manufacturerData != null && manufacturerData.containsKey(selectedModel)) {
+        return ['الكل'] + manufacturerData[selectedModel]!;
+      }
+    }
+    return ['الكل'] + List.generate(8, (i) => (2024 - i).toString());
+  }
 
   bool get _isModelDisabled => selectedManufacturer == 'الكل';
   bool get _isAllMode => selectedManufacturer == 'الكل' && selectedModel == 'الكل';
@@ -49,22 +98,82 @@ class _ItemsAddStepThreeState extends State<ItemsAddStepThree> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildCarSelectionForm(),
-          SizedBox(height: 24.h),
-          _buildCarVariantsList(),
-          if (showPublishButton) ...[
-            SizedBox(height: 32.h),
-            _buildPublishButton(),
-          ],
-          SizedBox(height: 30.h),
-        ],
-      ),
+    return GetBuilder<HomeControllerImp>(
+      builder: (homeCtrl) {
+        // إذا لم يتم تحميل بيانات السيارات بعد
+        if (!homeCtrl.carDataLoaded && homeCtrl.carDataError == null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(color: AppColor.primaryColor),
+                SizedBox(height: 16.h),
+                Text(
+                  'جاري تحميل بيانات السيارات...',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: AppColor.grey,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // إذا حدث خطأ في تحميل البيانات
+        if (homeCtrl.carDataError != null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64.r,
+                  color: AppColor.errorRed,
+                ),
+                SizedBox(height: 16.h),
+                Text(
+                  homeCtrl.carDataError!,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: AppColor.errorRed,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 16.h),
+                ElevatedButton(
+                  onPressed: () {
+                    homeCtrl.refreshData();
+                  },
+                  child: Text('إعادة المحاولة'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColor.primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildCarSelectionForm(),
+              SizedBox(height: 24.h),
+              _buildCarVariantsList(),
+              if (showPublishButton) ...[
+                SizedBox(height: 32.h),
+                _buildPublishButton(),
+              ],
+              SizedBox(height: 30.h),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -170,7 +279,7 @@ class _ItemsAddStepThreeState extends State<ItemsAddStepThree> {
         SizedBox(height: 10.h),
         DropdownButtonFormField<String>(
           value: selectedManufacturer,
-          decoration: _getInputDecoration('اختر الشركة المصنعة'),
+          decoration: _getInputDecoration('اختر الشركة المصنعة', hasError: showManufacturerError),
           items: manufacturers
               .map((it) => DropdownMenuItem(
             value: it,
@@ -196,6 +305,7 @@ class _ItemsAddStepThreeState extends State<ItemsAddStepThree> {
               }
               selectedManufacturer = val;
               showPublishButton = controller.carVariants.isNotEmpty;
+              showManufacturerError = false;
             });
           },
           validator: (v) => controller.carVariants.isEmpty && v == null
@@ -206,6 +316,17 @@ class _ItemsAddStepThreeState extends State<ItemsAddStepThree> {
           dropdownColor: Colors.white,
           borderRadius: BorderRadius.circular(16.r),
         ),
+        if (showManufacturerError)
+          Padding(
+            padding: EdgeInsets.only(top: 8.h, right: 16.w),
+            child: Text(
+              'يجب اختيار الشركة المصنعة أولاً',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 12.sp,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -223,49 +344,71 @@ class _ItemsAddStepThreeState extends State<ItemsAddStepThree> {
           ),
         ),
         SizedBox(height: 10.h),
-        DropdownButtonFormField<String>(
-          value: selectedModel,
-          decoration: _getInputDecoration(
-            'اختر موديل السيارة',
-            enabled: !_isModelDisabled,
-          ),
-          items: selectedManufacturer != null
-              ? modelsByManufacturer[selectedManufacturer]!
-              .map((it) => DropdownMenuItem(
-            value: it,
-            child: Text(
-              it,
-              style: TextStyle(fontSize: 16.sp),
-            ),
-          ))
-              .toList()
-              : [],
-          onChanged: _isModelDisabled
-              ? null
-              : (val) {
+        GestureDetector(
+          onTap: selectedManufacturer == null
+              ? () {
             setState(() {
-              if (selectedManufacturer == 'الكل' && val == 'الكل') {
-                controller.carVariants.clear();
-                selectedYears
-                  ..clear()
-                  ..add('الكل');
-                isAllSelected = true;
-              } else {
-                selectedYears.clear();
-                isAllSelected = false;
-              }
-              selectedModel = val;
-              showPublishButton = controller.carVariants.isNotEmpty;
+              showManufacturerError = true;
             });
-          },
-          validator: (v) => controller.carVariants.isEmpty && v == null
-              ? 'يرجى اختيار الموديل'
+          }
               : null,
-          icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppColor.primaryColor),
-          isExpanded: true,
-          dropdownColor: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
+          child: DropdownButtonFormField<String>(
+            value: selectedModel,
+            decoration: _getInputDecoration(
+              'اختر موديل السيارة',
+              enabled: !_isModelDisabled,
+              hasError: showModelError,
+            ),
+            items: selectedManufacturer != null
+                ? modelsByManufacturer[selectedManufacturer]!
+                .map((it) => DropdownMenuItem(
+              value: it,
+              child: Text(
+                it,
+                style: TextStyle(fontSize: 16.sp),
+              ),
+            ))
+                .toList()
+                : [],
+            onChanged: _isModelDisabled
+                ? null
+                : (val) {
+              setState(() {
+                if (selectedManufacturer == 'الكل' && val == 'الكل') {
+                  controller.carVariants.clear();
+                  selectedYears
+                    ..clear()
+                    ..add('الكل');
+                  isAllSelected = true;
+                } else {
+                  selectedYears.clear();
+                  isAllSelected = false;
+                }
+                selectedModel = val;
+                showPublishButton = controller.carVariants.isNotEmpty;
+                showModelError = false;
+              });
+            },
+            validator: (v) => controller.carVariants.isEmpty && v == null
+                ? 'يرجى اختيار الموديل'
+                : null,
+            icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppColor.primaryColor),
+            isExpanded: true,
+            dropdownColor: Colors.white,
+            borderRadius: BorderRadius.circular(16.r),
+          ),
         ),
+        if (showModelError)
+          Padding(
+            padding: EdgeInsets.only(top: 8.h, right: 16.w),
+            child: Text(
+              'يجب اختيار موديل السيارة أولاً',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 12.sp,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -289,84 +432,99 @@ class _ItemsAddStepThreeState extends State<ItemsAddStepThree> {
   }
 
   Widget _buildYearsChips() {
-    return Container(
-      padding: EdgeInsets.all(16.r),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Wrap(
-        spacing: 10.w,
-        runSpacing: 12.h,
-        children: years.map((year) {
-          final isSelected = selectedYears.contains(year);
-          final isDisabled = (year != 'الكل' &&
-              controller.carVariants.contains(
-                '${selectedManufacturer ?? ''}-${selectedModel ?? ''}-$year',
-              )) ||
-              _shouldDisableYears ||
-              (_isAllMode && year != 'الكل');
+    final availableYears = _getYearsForModel();
 
-          return ChoiceChip(
-            label: Text(
-              year,
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? Colors.white : isDisabled ? Colors.grey : AppColor.grey2,
+    return GestureDetector(
+      onTap: () {
+        if (selectedManufacturer == null) {
+          setState(() {
+            showManufacturerError = true;
+          });
+        } else if (selectedModel == null) {
+          setState(() {
+            showModelError = true;
+          });
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.all(16.r),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Wrap(
+          spacing: 10.w,
+          runSpacing: 12.h,
+          children: availableYears.map((year) {
+            final isSelected = selectedYears.contains(year);
+            final isDisabled = (year != 'الكل' &&
+                controller.carVariants.contains(
+                  '${selectedManufacturer ?? ''}-${selectedModel ?? ''}-$year',
+                )) ||
+                _shouldDisableYears ||
+                (_isAllMode && year != 'الكل');
+
+            return ChoiceChip(
+              label: Text(
+                year,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? Colors.white : isDisabled ? Colors.grey : AppColor.grey2,
+                ),
               ),
-            ),
-            selected: isSelected,
-            onSelected: isDisabled
-                ? null
-                : (sel) {
-              setState(() {
-                if (year == 'الكل' &&
-                    selectedManufacturer == 'الكل' &&
-                    selectedModel == 'الكل' &&
-                    sel) {
-                  controller.carVariants.clear();
-                  selectedYears
-                    ..clear()
-                    ..add('الكل');
-                  isAllSelected = true;
-                } else {
+              selected: isSelected,
+              onSelected: (isDisabled || selectedManufacturer == null || selectedModel == null)
+                  ? null
+                  : (sel) {
+                setState(() {
                   if (year == 'الكل') {
-                    sel
-                        ? selectedYears.add('الكل')
-                        : selectedYears.remove('الكل');
-                    isAllSelected = sel;
+                    if (sel) {
+                      // عند اختيار "الكل" - إزالة جميع السنوات المحددة واختيار "الكل" فقط
+                      selectedYears.clear();
+                      selectedYears.add('الكل');
+                      isAllSelected = true;
+                    } else {
+                      // عند إلغاء اختيار "الكل"
+                      selectedYears.remove('الكل');
+                      isAllSelected = false;
+                    }
                   } else {
-                    sel
-                        ? selectedYears.add(year)
-                        : selectedYears.remove(year);
-                    selectedYears.remove('الكل');
-                    isAllSelected = false;
+                    // عند اختيار سنة محددة
+                    if (sel) {
+                      // إزالة "الكل" إذا كان محدداً وإضافة السنة المحددة
+                      selectedYears.remove('الكل');
+                      selectedYears.add(year);
+                      isAllSelected = false;
+                    } else {
+                      // إزالة السنة المحددة
+                      selectedYears.remove(year);
+                    }
                   }
-                }
-                showPublishButton = controller.carVariants.isNotEmpty;
-              });
-            },
-            backgroundColor: Colors.grey.shade100,
-            selectedColor: AppColor.primaryColor,
-            avatar: isSelected
-                ? Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.3),
-                shape: BoxShape.circle,
+                  showPublishButton = controller.carVariants.isNotEmpty;
+                });
+              },
+              backgroundColor: Colors.grey.shade100,
+              selectedColor: AppColor.primaryColor,
+              avatar: isSelected
+                  ? Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.check, size: 18.r, color: Colors.white),
+              )
+                  : null,
+              disabledColor: Colors.grey.shade200,
+              elevation: isSelected ? 2 : 0,
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30.r),
               ),
-              child: Icon(Icons.check, size: 18.r, color: Colors.white),
-            )
-                : null,
-            disabledColor: Colors.grey.shade200,
-            elevation: isSelected ? 2 : 0,
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30.r),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -477,7 +635,7 @@ class _ItemsAddStepThreeState extends State<ItemsAddStepThree> {
         Get.snackbar(
           'تم الحذف',
           'تم حذف ${manufacturer} ${model} ${year}',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.white,
           colorText: Colors.black87,
           margin: EdgeInsets.all(16.w),
@@ -607,7 +765,7 @@ class _ItemsAddStepThreeState extends State<ItemsAddStepThree> {
     Get.snackbar(
       'تمت الإضافة',
       'تم إضافة السيارة بنجاح',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: Colors.green.shade50,
       colorText: Colors.green.shade800,
       margin: EdgeInsets.all(16.w),
@@ -625,7 +783,7 @@ class _ItemsAddStepThreeState extends State<ItemsAddStepThree> {
     Get.snackbar(
       'خطأ',
       message,
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: AppColor.errorLightRed,
       colorText: AppColor.errorRed,
       margin: EdgeInsets.all(16.w),
@@ -638,7 +796,7 @@ class _ItemsAddStepThreeState extends State<ItemsAddStepThree> {
     );
   }
 
-  InputDecoration _getInputDecoration(String hint, {bool enabled = true}) {
+  InputDecoration _getInputDecoration(String hint, {bool enabled = true, bool hasError = false}) {
     return InputDecoration(
       hintText: hint,
       filled: true,
@@ -646,11 +804,11 @@ class _ItemsAddStepThreeState extends State<ItemsAddStepThree> {
       contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16.r),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderSide: BorderSide(color: hasError ? Colors.red : Colors.grey.shade300),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16.r),
-        borderSide: BorderSide(color: AppColor.primaryColor, width: 2),
+        borderSide: BorderSide(color: hasError ? Colors.red : AppColor.primaryColor, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16.r),
@@ -662,7 +820,7 @@ class _ItemsAddStepThreeState extends State<ItemsAddStepThree> {
       ),
       disabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16.r),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+        borderSide: BorderSide(color: hasError ? Colors.red : Colors.grey.shade200),
       ),
     );
   }

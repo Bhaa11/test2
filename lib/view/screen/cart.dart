@@ -1,6 +1,7 @@
 import 'package:ecommercecourse/controller/cart_controller.dart';
 import 'package:ecommercecourse/core/class/handlingdataview.dart';
 import 'package:ecommercecourse/core/constant/color.dart';
+import 'package:ecommercecourse/core/constant/routes.dart';
 import 'package:ecommercecourse/view/widget/cart/custom_bottom_navgationbar_cart.dart';
 import 'package:ecommercecourse/view/widget/cart/customitemscartlist.dart';
 import 'package:ecommercecourse/view/widget/cart/topcardCart.dart';
@@ -12,33 +13,51 @@ class Cart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+// حذف الكنترولر السابق وإنشاء جديد لضمان إعادة تحميل البيانات
+    Get.delete<CartController>();
     CartController cartController = Get.put(CartController());
 
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: _buildAppBar(context),
-      bottomNavigationBar: GetBuilder<CartController>(
-        builder: (controller) => BottomNavgationBarCart(
-          shipping: "${controller.pricedelivery}",
-          price: "${controller.priceorders}",
-          totalprice: "${controller.getTotalPrice()}",
+// الحصول على معلومة الصفحة المصدر
+    String fromPage = Get.arguments?["fromPage"] ?? "other";
+
+    return WillPopScope(
+      onWillPop: () async {
+// التحكم في سلوك زر الرجوع
+        if (fromPage == "homepage") {
+// إذا جاء من الصفحة الرئيسية، حذف جميع الصفحات والعودة للصفحة الرئيسية
+          Get.offAllNamed(AppRoute.homepage);
+          return false; // منع السلوك الافتراضي
+        } else {
+// إذا جاء من مكان آخر، السلوك الطبيعي (العودة للصفحة السابقة)
+          return true; // السماح بالسلوك الافتراضي
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: _buildAppBar(context, fromPage),
+        bottomNavigationBar: GetBuilder<CartController>(
+          builder: (controller) => BottomNavgationBarCart(
+            shipping: "${controller.pricedelivery}",
+            price: "${controller.priceorders}",
+            totalprice: "${controller.getTotalPrice()}",
+          ),
         ),
-      ),
-      body: GetBuilder<CartController>(
-        builder: (controller) => HandlingDataView(
-          statusRequest: controller.statusRequest,
-          widget: controller.data.isEmpty
-              ? _buildEmptyCart(context)
-              : _buildCartContent(controller),
+        body: GetBuilder<CartController>(
+          builder: (controller) => HandlingDataView(
+            statusRequest: controller.statusRequest,
+            widget: controller.data.isEmpty
+                ? _buildEmptyCart(context)
+                : _buildCartContent(controller),
+          ),
         ),
       ),
     );
   }
 
-  AppBar _buildAppBar(BuildContext context) {
+  AppBar _buildAppBar(BuildContext context, String fromPage) {
     return AppBar(
       title: Text(
-        "سلة التسوق",
+        "سلة التسوق".tr,
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 18,
@@ -49,6 +68,18 @@ class Cart extends StatelessWidget {
       elevation: 0,
       backgroundColor: Colors.grey[50],
       iconTheme: IconThemeData(color: AppColor.primaryColor),
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back),
+        onPressed: () {
+// نفس منطق WillPopScope
+          if (fromPage == "homepage") {
+// حذف جميع الصفحات والعودة للصفحة الرئيسية
+            Get.offAllNamed(AppRoute.homepage);
+          } else {
+            Get.back();
+          }
+        },
+      ),
     );
   }
 
@@ -64,7 +95,7 @@ class Cart extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            "سلة التسوق فارغة",
+            "سلة التسوق فارغة".tr,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -73,7 +104,7 @@ class Cart extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            "ابدأ بإضافة منتجات للسلة",
+            "ابدأ بإضافة منتجات للسلة".tr,
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[600],
@@ -81,7 +112,7 @@ class Cart extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () => Get.back(),
+            onPressed: () => Get.offAllNamed(AppRoute.homepage),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColor.primaryColor,
               padding: const EdgeInsets.symmetric(
@@ -92,8 +123,8 @@ class Cart extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text(
-              "تصفح المنتجات",
+            child: Text(
+              "تصفح المنتجات".tr,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -109,14 +140,14 @@ class Cart extends StatelessWidget {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
           child: TopCardCart(
-            message: "لديك ${controller.totalcountitems} عنصر في السلة",
+            message: "لديك".tr + " ${controller.totalcountitems} " + "عنصر في السلة".tr,
           ),
         ),
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 5),
             physics: const BouncingScrollPhysics(),
             itemCount: controller.data.length,
             itemBuilder: (context, index) {
@@ -132,8 +163,11 @@ class Cart extends StatelessWidget {
       CartController controller, int index, BuildContext context) {
     final item = controller.data[index];
 
+// استخدام السعر بعد الخصم إذا كان متوفراً، وإلا استخدام السعر الأصلي
+    String displayPrice = item.itemspricediscount ?? item.itemsprice ?? "0";
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: 0),
       child: CustomItemsCartList(
         onAdd: () async {
           await controller.add(item.itemsId!);
@@ -145,10 +179,10 @@ class Cart extends StatelessWidget {
         },
         imagename: item.itemsImage!,
         name: item.itemsName!,
-        price: "${item.itemsprice} \$",
+        price: "$displayPrice \$",
         count: "${item.countitems}",
         onTap: () {
-          // يمكنك إضافة التنقل إلى صفحة تفاصيل المنتج هنا
+          controller.goToPageProductDetails(item);
         },
       ),
     );

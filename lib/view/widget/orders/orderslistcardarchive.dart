@@ -135,7 +135,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
           ),
           SizedBox(width: 8),
           Text(
-            "مكتمل",
+            "مكتمل".tr,
             style: TextStyle(
               fontSize: screenWidth * 0.038,
               fontWeight: FontWeight.w700,
@@ -179,7 +179,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "معلومات العميل",
+                      "معلومات العميل".tr,
                       style: TextStyle(
                         fontSize: screenWidth * 0.038,
                         fontWeight: FontWeight.w700,
@@ -198,7 +198,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
                         Expanded(
                           child: Text(
                             [
-                              listdata.addressName ?? "غير محدد",
+                              listdata.addressName ?? "غير محدد".tr,
                               if (listdata.addressCity != null && listdata.addressStreet!.isNotEmpty)
                                 listdata.addressCity!,
                               if (listdata.addressStreet != null && listdata.addressCity!.isNotEmpty)
@@ -225,7 +225,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            listdata.usersPhone ?? "غير محدد",
+                            listdata.usersPhone ?? "غير محدد".tr,
                             style: TextStyle(
                               fontSize: screenWidth * 0.038,
                               fontWeight: FontWeight.w600,
@@ -269,7 +269,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
           ),
           SizedBox(width: 8),
           Text(
-            "تقييم البائع:",
+            "تقييم البائع:".tr,
             style: TextStyle(
               fontSize: screenWidth * 0.035,
               fontWeight: FontWeight.w600,
@@ -311,7 +311,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "المنتجات (${listdata.items!.length})",
+              "المنتجات" + " (${listdata.items!.length})".tr,
               style: TextStyle(
                 fontSize: screenWidth * 0.042,
                 fontWeight: FontWeight.w800,
@@ -322,7 +322,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
               InkWell(
                 onTap: () => _showAllProducts(context),
                 child: Text(
-                  "عرض الكل",
+                  "عرض الكل".tr,
                   style: TextStyle(
                     fontSize: screenWidth * 0.035,
                     color: AppColor.primaryColor,
@@ -425,7 +425,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
                 Padding(
                   padding: EdgeInsets.all(8),
                   child: Text(
-                    item.itemsName ?? "منتج",
+                    item.itemsName ?? "منتج".tr,
                     style: TextStyle(
                       fontSize: screenWidth * 0.032,
                       fontWeight: FontWeight.w600,
@@ -547,7 +547,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "المنتجات (${listdata.items!.length})",
+                    "المنتجات".tr + " (${listdata.items!.length})",
                     style: TextStyle(
                       fontSize: screenWidth * 0.05,
                       fontWeight: FontWeight.w800,
@@ -645,7 +645,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.itemsName ?? "منتج غير محدد",
+                  item.itemsName ?? "منتج غير محدد".tr,
                   style: TextStyle(
                     fontSize: screenWidth * 0.042,
                     fontWeight: FontWeight.w700,
@@ -655,7 +655,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
                 ),
                 SizedBox(height: 5),
                 Text(
-                  "الكمية: $itemCount",
+                  "الكمية:".tr + " $itemCount",
                   style: TextStyle(
                     fontSize: screenWidth * 0.036,
                     color: Colors.grey[600],
@@ -666,7 +666,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
           ),
           SizedBox(width: 10),
           Text(
-            "${price.toStringAsFixed(2)} د.ع",
+            "${price.toStringAsFixed(2)} " + "د.ع".tr,
             style: TextStyle(
               fontSize: screenWidth * 0.038,
               fontWeight: FontWeight.w800,
@@ -696,9 +696,9 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
       ),
       child: Column(
         children: [
-          _buildSummaryRow(context, "سعر المنتجات", "${subtotal.toStringAsFixed(2)} د.ع"),
+          _buildSummaryRow(context, "سعر المنتجات".tr, "${subtotal.toStringAsFixed(2)} " + "د.ع".tr),
           SizedBox(height: 8),
-          _buildSummaryRow(context, "رسوم التوصيل", "${deliveryFee.toStringAsFixed(2)} د.ع"),
+          _buildSummaryRow(context, "رسوم التوصيل".tr, "${deliveryFee.toStringAsFixed(2)}" + "د.ع".tr),
           SizedBox(height: 12),
           Container(
             height: 1,
@@ -709,7 +709,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "المبلغ الإجمالي",
+                "المبلغ الإجمالي".tr,
                 style: TextStyle(
                   fontSize: screenWidth * 0.04,
                   fontWeight: FontWeight.w700,
@@ -717,7 +717,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
                 ),
               ),
               Text(
-                "${total.toStringAsFixed(2)} د.ع",
+                "${total.toStringAsFixed(2)}" + "د.ع".tr,
                 style: TextStyle(
                   fontSize: screenWidth * 0.045,
                   fontWeight: FontWeight.w800,
@@ -778,7 +778,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
           ),
           SizedBox(width: screenWidth * 0.02),
           Text(
-            "تم تقييم البائع بنجاح",
+            "تم تقييم البائع بنجاح".tr,
             style: TextStyle(
               fontSize: screenWidth * 0.038,
               fontWeight: FontWeight.w600,
@@ -811,7 +811,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
             ),
             SizedBox(width: screenWidth * 0.02),
             Text(
-              "تقييم البائع",
+              "تقييم البائع".tr,
               style: TextStyle(
                 fontSize: screenWidth * 0.04,
                 fontWeight: FontWeight.bold,
@@ -840,11 +840,11 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
     // قائمة أوصاف التقييمات
     final List<String> ratingDescriptions = [
       '',
-      'سيء جداً',
-      'سيء',
-      'متوسط',
-      'جيد',
-      'ممتاز'
+      'سيء جداً'.tr,
+      'سيء'.tr,
+      'متوسط'.tr,
+      'جيد'.tr,
+      'ممتاز'.tr
     ];
 
     showDialog(
@@ -908,7 +908,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
                       SizedBox(height: screenWidth * 0.04),
 
                       Text(
-                        'تقييم البائع',
+                        'تقييم البائع'.tr,
                         style: TextStyle(
                           fontSize: screenWidth * 0.055,
                           fontWeight: FontWeight.bold,
@@ -920,7 +920,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
                       SizedBox(height: screenWidth * 0.02),
 
                       Text(
-                        'شاركنا رأيك في تجربة التسوق',
+                        'شاركنا رأيك في تجربة التسوق'.tr,
                         style: TextStyle(
                           fontSize: screenWidth * 0.035,
                           color: Colors.grey[600],
@@ -1018,7 +1018,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
                           maxLines: 3,
                           maxLength: 200,
                           decoration: InputDecoration(
-                            hintText: 'أخبرنا عن تجربتك (اختياري)',
+                            hintText: 'أخبرنا عن تجربتك (اختياري)'.tr,
                             hintStyle: TextStyle(
                               color: Colors.grey[500],
                               fontSize: screenWidth * 0.035,
@@ -1053,7 +1053,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
                                 ),
                               ),
                               child: Text(
-                                'إلغاء',
+                                'إلغاء'.tr,
                                 style: TextStyle(
                                   fontSize: screenWidth * 0.04,
                                   color: Colors.grey[600],
@@ -1115,7 +1115,7 @@ class CardOrdersListArchive extends GetView<OrdersArchiveController> {
                                     ),
                                     SizedBox(width: screenWidth * 0.02),
                                     Text(
-                                      'إرسال التقييم',
+                                      'إرسال التقييم'.tr,
                                       style: TextStyle(
                                         fontSize: screenWidth * 0.04,
                                         fontWeight: FontWeight.bold,

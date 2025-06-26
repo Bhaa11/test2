@@ -90,6 +90,7 @@ List<GetPage<dynamic>>? routes = [
   GetPage(name: AppRoute.ordershome, page: () => const OrdersSellerScreen()),
   GetPage(name: AppRoute.notificationview, page: () => const NotificationView()),
   GetPage(name: AppRoute.sellersetails, page: () => const SellerDetailsView()),
+  GetPage(name: AppRoute.language, page: () => const Language()),
   GetPage(
       name: AppRoute.mywallet,
       page: () {
