@@ -5,10 +5,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../view/widget/customappbar.dart';
+import '../constant/color.dart';
 
 imageUploadCamera() async {
   final PickedFile? file = await ImagePicker().getImage(source: ImageSource.camera, imageQuality: 90);
@@ -29,6 +28,32 @@ fileUploadGallery([isSvg = false]) async {
 
   if (result != null) {
     return File(result.files.single.path!);
+  } else {
+    return null;
+  }
+}
+
+// دالة جديدة لالتقاط صورة من الكاميرا
+multipleImageUploadCamera() async {
+  final XFile? file = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      imageQuality: 90
+  );
+  if (file != null) {
+    return [File(file.path)];
+  } else {
+    return null;
+  }
+}
+
+// دالة جديدة لتصوير فيديو من الكاميرا
+multipleVideoUploadCamera() async {
+  final XFile? file = await ImagePicker().pickVideo(
+    source: ImageSource.camera,
+    maxDuration: const Duration(minutes: 5), // حد أقصى 5 دقائق
+  );
+  if (file != null) {
+    return [File(file.path)];
   } else {
     return null;
   }
@@ -126,8 +151,12 @@ showbottommenu(Future<void> Function() imageUploadCameraFunc, Future<void> Funct
   );
 }
 
-// دالة جديدة لعرض خيارات الملفات المتعددة
-showMultipleFilesBottomMenu(Future<void> Function() multipleFilesUploadFunc) {
+// دالة محدثة لعرض خيارات الملفات المتعددة مع خيارات الكاميرا المتقدمة
+showMultipleFilesBottomMenu(
+    Future<void> Function() multipleImageUploadCameraFunc,
+    Future<void> Function() multipleVideoUploadCameraFunc,
+    Future<void> Function() multipleFilesUploadGalleryFunc
+    ) {
   Get.bottomSheet(
     BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
@@ -171,12 +200,46 @@ showMultipleFilesBottomMenu(Future<void> Function() multipleFilesUploadFunc) {
                 ),
               ),
               const SizedBox(height: 25),
+
+              // خيار التقاط صورة
               _buildOptionButton(
-                icon: Icons.perm_media_rounded,
-                text: "اختيار صور وفيديوهات (حتى 10 ملفات)",
+                icon: Icons.camera_alt_rounded,
+                text: "التقاط صورة",
                 color: AppColor.primaryColor,
                 onTap: () async {
-                  await multipleFilesUploadFunc();
+                  await multipleImageUploadCameraFunc();
+                  Get.back();
+                },
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Divider(thickness: 1.2, color: Colors.grey.withOpacity(0.2)),
+              ),
+
+              // خيار تصوير فيديو
+              _buildOptionButton(
+                icon: Icons.videocam_rounded,
+                text: "تصوير فيديو",
+                color: Colors.red.shade600,
+                onTap: () async {
+                  await multipleVideoUploadCameraFunc();
+                  Get.back();
+                },
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Divider(thickness: 1.2, color: Colors.grey.withOpacity(0.2)),
+              ),
+
+              // خيار اختيار من المعرض
+              _buildOptionButton(
+                icon: Icons.perm_media_rounded,
+                text: "اختيار صور وفيديوهات",
+                color: Colors.green,
+                onTap: () async {
+                  await multipleFilesUploadGalleryFunc();
                   Get.back();
                 },
               ),

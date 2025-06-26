@@ -1,4 +1,3 @@
-// lib/controller/profile_controller.dart
 import 'dart:io';
 import 'package:ecommercecourse/core/class/statusrequest.dart';
 import 'package:ecommercecourse/core/functions/handingdatacontroller.dart';
@@ -272,7 +271,27 @@ class ProfileController extends GetxController {
 
       if (updateStatusRequest == StatusRequest.success) {
         if (response['status'] == "success") {
-          _handleUpdateSuccess();
+          // تحديث البيانات المحلية
+          _updateSharedPreferences();
+
+          // إعادة تعيين الصورة المختارة
+          selectedImage = null;
+
+          // إظهار رسالة نجاح
+          Get.snackbar(
+            "نجح",
+            "تم تحديث الملف الشخصي بنجاح",
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 3),
+          );
+
+          // إعادة جلب البيانات المحدثة
+          await getUserProfile();
+
+          // إغلاق الـ dialog
+          Get.back();
+
         } else {
           updateStatusRequest = StatusRequest.failure;
           Get.snackbar("خطأ", response['message'] ?? "فشل في تحديث الملف الشخصي");
@@ -286,30 +305,6 @@ class ProfileController extends GetxController {
       print("Error in updateProfile: $e");
     }
     update();
-  }
-
-  /// التعامل مع نجاح التحديث
-  void _handleUpdateSuccess() {
-    // تحديث البيانات المحلية
-    _updateSharedPreferences();
-
-    // إعادة تعيين الصورة المختارة
-    selectedImage = null;
-
-    // إظهار رسالة نجاح
-    Get.snackbar(
-      "نجح",
-      "تم تحديث الملف الشخصي بنجاح",
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 3),
-    );
-
-    // إعادة جلب البيانات المحدثة
-    getUserProfile();
-
-    // إغلاق الـ dialog
-    Get.back();
   }
 
   /// التحقق من صحة النموذج

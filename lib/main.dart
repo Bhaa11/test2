@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // استيراد مكتبة Services للتحكم في واجهة النظام
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:jiffy/jiffy.dart';
@@ -14,15 +14,13 @@ import 'bindings/intialbindings.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // تعيين لون شريط الحالة (شريط البطارية والبيانات والساعة)
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: AppColor.primaryColor, // لون خلفية شريط الحالة
-    statusBarIconBrightness: Brightness.dark, // لون الأيقونات داكن (لأن الخلفية فاتحة)
-    statusBarBrightness: Brightness.light, // للأجهزة iOS
+    statusBarColor: AppColor.primaryColor,
+    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.light,
   ));
 
   await initialServices();
-  // await Jiffy.setLocale('ar'); // لو حاب تفعّل التعريب في Jiffy
   runApp(const MyApp());
 }
 
@@ -31,7 +29,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // سجل الـ LocaleController
     final localeController = Get.put(LocaleController());
 
     return ScreenUtilInit(
@@ -41,29 +38,33 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return GetMaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'Ecommerce Course',
+          title: 'SpeerIQ',
 
-          // تكوين شريط الحالة العلوي باستخدام AnnotatedRegion
           builder: (context, child) {
-            return AnnotatedRegion<SystemUiOverlayStyle>(
-              value: const SystemUiOverlayStyle(
-                statusBarColor: AppColor.primaryColor,
-                statusBarIconBrightness: Brightness.dark,
-                statusBarBrightness: Brightness.light,
+            // ✅ إضافة دعم اتجاه النص للكردية والعربية
+            final locale = Get.locale ?? localeController.language;
+            final isRTL = locale?.languageCode == 'ar' || locale?.languageCode == 'ku';
+
+            return Directionality(
+              textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+              child: AnnotatedRegion<SystemUiOverlayStyle>(
+                value: const SystemUiOverlayStyle(
+                  statusBarColor: AppColor.primaryColor,
+                  statusBarIconBrightness: Brightness.dark,
+                  statusBarBrightness: Brightness.light,
+                ),
+                child: child!,
               ),
-              child: child!,
             );
           },
 
-          // ترجمة وتعريب
+          // إعدادات الترجمة
           translations: MyTranslation(),
           locale: localeController.language,
+          fallbackLocale: const Locale('ar'),
           theme: localeController.appTheme,
 
-          // ربط الـ DI
           initialBinding: InitialBindings(),
-
-          // تعريف المسارات
           getPages: routes,
         );
       },

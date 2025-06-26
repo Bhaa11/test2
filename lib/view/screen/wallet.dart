@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/services/wallet_service.dart';
@@ -17,7 +18,7 @@ class _MyWalletState extends State<MyWallet> {
   double balance = 0.0;
   double pendingFees = 0.0;
   double effectiveBalance = 0.0;
-  String currency = "د.ع";
+  String currency = "د.ع".tr;
   String userName = "";
   bool isLoading = true;
   bool isDepositing = false; // متغير لتتبع حالة الإيداع
@@ -57,7 +58,7 @@ class _MyWalletState extends State<MyWallet> {
             balance = double.tryParse(data['wallet']['wallet_balance']?.toString() ?? '0') ?? 0.0;
             pendingFees = double.tryParse(data['wallet']['pending_fees']?.toString() ?? '0') ?? 0.0;
             effectiveBalance = double.tryParse(data['wallet']['effective_balance']?.toString() ?? '0') ?? 0.0;
-            userName = data['wallet']['users_name']?.toString() ?? 'المستخدم';
+            userName = data['wallet']['users_name']?.toString() ?? 'المستخدم'.tr;
 
             // تحويل المعاملات
             if (data['transactions'] != null && data['transactions'] is List) {
@@ -65,7 +66,7 @@ class _MyWalletState extends State<MyWallet> {
                 try {
                   return {
                     'id': transaction['transaction_id']?.toString() ?? '',
-                    'title': transaction['transaction_description']?.toString() ?? 'معاملة',
+                    'title': transaction['transaction_description']?.toString() ?? 'معاملة'.tr,
                     'amount': double.tryParse(transaction['transaction_amount']?.toString() ?? '0') ?? 0.0,
                     'date': DateTime.tryParse(transaction['transaction_created_at']?.toString() ?? '') ?? DateTime.now(),
                     'status': _getTransactionStatus(
@@ -77,10 +78,10 @@ class _MyWalletState extends State<MyWallet> {
                 } catch (e) {
                   return {
                     'id': '',
-                    'title': 'معاملة',
+                    'title': 'معاملة'.tr,
                     'amount': 0.0,
                     'date': DateTime.now(),
-                    'status': 'غير معروف',
+                    'status': 'غير معروف'.tr,
                     'type': ''
                   };
                 }
@@ -95,19 +96,19 @@ class _MyWalletState extends State<MyWallet> {
           setState(() {
             isLoading = false;
           });
-          _showErrorMessage('بيانات المحفظة غير متوفرة');
+          _showErrorMessage('بيانات المحفظة غير متوفرة'.tr);
         }
       } else {
         setState(() {
           isLoading = false;
         });
-        _showErrorMessage(result['message']?.toString() ?? 'حدث خطأ في تحميل البيانات');
+        _showErrorMessage(result['message']?.toString() ?? 'حدث خطأ في تحميل البيانات'.tr);
       }
     } catch (e) {
       setState(() {
         isLoading = false;
       });
-      _showErrorMessage('حدث خطأ في الاتصال: ${e.toString()}');
+      _showErrorMessage('حدث خطأ في الاتصال:'.tr + ' ${e.toString()}');
     }
   }
 
@@ -115,18 +116,18 @@ class _MyWalletState extends State<MyWallet> {
     if (status == 'completed') {
       switch (type) {
         case 'deposit':
-          return 'مكتمل';
+          return 'مكتمل'.tr;
         case 'payment':
-          return 'مدفوع';
+          return 'مدفوع'.tr;
         case 'refund':
-          return 'مسترد';
+          return 'مسترد'.tr;
         default:
-          return 'مكتمل';
+          return 'مكتمل'.tr;
       }
     } else if (status == 'pending') {
-      return 'معلق';
+      return 'معلق'.tr;
     } else {
-      return 'فاشل';
+      return 'فاشل'.tr;
     }
   }
 
@@ -161,8 +162,8 @@ class _MyWalletState extends State<MyWallet> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
-        title: const Text(
-          "المحفظة",
+        title:  Text(
+          "المحفظة".tr,
           style: TextStyle(color: Colors.black, fontSize: 20),
         ),
         centerTitle: true,
@@ -232,7 +233,7 @@ class _MyWalletState extends State<MyWallet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isNegative ? "الديون المستحقة" : "رصيدك الحالي",
+                isNegative ? "الديون المستحقة".tr : "رصيدك الحالي".tr,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -253,7 +254,7 @@ class _MyWalletState extends State<MyWallet> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isNegative ? "مدين" : "دائن",
+                      isNegative ? "مدين".tr : "دائن".tr,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -317,8 +318,8 @@ class _MyWalletState extends State<MyWallet> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Text(
-                "تم التحديث",
+               Text(
+                "تم التحديث".tr,
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
@@ -357,8 +358,8 @@ class _MyWalletState extends State<MyWallet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "رسوم مستحقة",
+                 Text(
+                  "رسوم مستحقة".tr,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 Text(
@@ -370,7 +371,7 @@ class _MyWalletState extends State<MyWallet> {
           ),
           Flexible(
             child: Text(
-              "سيتم الخصم تلقائياً عند الإيداع",
+              "سيتم الخصم تلقائياً عند الإيداع".tr,
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               textAlign: TextAlign.end,
             ),
@@ -398,7 +399,7 @@ class _MyWalletState extends State<MyWallet> {
           elevation: 2,
         ),
         child: isDepositing
-            ? const Row(
+            ?  Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
@@ -411,7 +412,7 @@ class _MyWalletState extends State<MyWallet> {
             ),
             SizedBox(width: 12),
             Text(
-              "جاري المعالجة...",
+              "جاري المعالجة...".tr,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -420,13 +421,13 @@ class _MyWalletState extends State<MyWallet> {
             ),
           ],
         )
-            : const Row(
+            : Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.add_circle_outline, color: Colors.white),
             SizedBox(width: 8),
             Text(
-              "إيداع رصيد",
+              "إيداع رصيد".tr,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -446,15 +447,15 @@ class _MyWalletState extends State<MyWallet> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            "المعاملات السابقة",
+          Text(
+            "المعاملات السابقة".tr,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
           Text(
-            "${transactions.length} معاملة",
+            "${transactions.length} " + "معاملة".tr,
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[600],
@@ -479,7 +480,7 @@ class _MyWalletState extends State<MyWallet> {
             ),
             const SizedBox(height: 16),
             Text(
-              "لا توجد معاملات",
+              "لا توجد معاملات".tr,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -555,7 +556,7 @@ class _MyWalletState extends State<MyWallet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  transaction["title"]?.toString() ?? "معاملة",
+                  transaction["title"]?.toString() ?? "معاملة".tr,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
@@ -595,7 +596,7 @@ class _MyWalletState extends State<MyWallet> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  transaction["status"]?.toString() ?? "غير معروف",
+                  transaction["status"]?.toString() ?? "غير معروف".tr,
                   style: TextStyle(
                     color: Colors.grey[700],
                     fontSize: 10,
@@ -668,12 +669,12 @@ class _MyWalletState extends State<MyWallet> {
                           ),
                         ),
                         const SizedBox(width: 16),
-                        const Expanded(
+                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "إيداع رصيد",
+                                "إيداع رصيد".tr,
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -681,7 +682,7 @@ class _MyWalletState extends State<MyWallet> {
                                 ),
                               ),
                               Text(
-                                "اختر المبلغ المناسب لك",
+                                "اختر المبلغ المناسب لك".tr,
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Color(0xFF666666),
@@ -718,8 +719,8 @@ class _MyWalletState extends State<MyWallet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Quick amounts
-                          const Text(
-                            "المبالغ السريعة",
+                          Text(
+                            "المبالغ السريعة".tr,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -809,8 +810,8 @@ class _MyWalletState extends State<MyWallet> {
                           const SizedBox(height: 32),
 
                           // Custom amount
-                          const Text(
-                            "مبلغ مخصص",
+                          Text(
+                            "مبلغ مخصص".tr,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -935,7 +936,7 @@ class _MyWalletState extends State<MyWallet> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                "الحد الأدنى للإيداع: ${NumberFormat('#,###').format(minAmount.toInt())} $currency",
+                                "الحد الأدنى للإيداع:".tr + " ${NumberFormat('#,###').format(minAmount.toInt())} $currency",
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey[600],
@@ -966,8 +967,8 @@ class _MyWalletState extends State<MyWallet> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text(
-                                      "الرصيد الحالي",
+                                     Text(
+                                      "الرصيد الحالي".tr,
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Color(0xFF666666),
@@ -988,8 +989,8 @@ class _MyWalletState extends State<MyWallet> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      const Text(
-                                        "رسوم مستحقة",
+                                       Text(
+                                        "رسوم مستحقة".tr,
                                         style: TextStyle(
                                           fontSize: 14,
                                           color: Color(0xFF666666),
@@ -1032,9 +1033,9 @@ class _MyWalletState extends State<MyWallet> {
                                     ),
                                   ),
                                   const SizedBox(width: 16),
-                                  const Expanded(
+                                  Expanded(
                                     child: Text(
-                                      "جاري معالجة العملية، يرجى الانتظار...",
+                                      "جاري معالجة العملية، يرجى الانتظار...".tr,
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
@@ -1084,7 +1085,7 @@ class _MyWalletState extends State<MyWallet> {
                                   final result = await WalletService.depositMoney(
                                       widget.userId,
                                       amount,
-                                      "تم إيداع رصيد"
+                                      "تم إيداع رصيد".tr
                                   );
 
                                   if (Navigator.canPop(context)) {
@@ -1092,26 +1093,26 @@ class _MyWalletState extends State<MyWallet> {
                                   }
 
                                   if (result['status'] == 'success') {
-                                    _showSuccessMessage(result['message']?.toString() ?? 'تم إيداع المبلغ بنجاح');
+                                    _showSuccessMessage(result['message']?.toString() ?? 'تم إيداع المبلغ بنجاح'.tr);
                                     await _loadWalletData();
                                   } else {
-                                    _showErrorMessage(result['message']?.toString() ?? 'فشل في إيداع المبلغ');
+                                    _showErrorMessage(result['message']?.toString() ?? 'فشل في إيداع المبلغ'.tr);
                                   }
                                 } catch (e) {
                                   if (Navigator.canPop(context)) {
                                     Navigator.pop(context);
                                   }
-                                  _showErrorMessage('حدث خطأ أثناء العملية: ${e.toString()}');
+                                  _showErrorMessage('حدث خطأ أثناء العملية:'.tr + ' ${e.toString()}');
                                 } finally {
                                   setState(() {
                                     isDepositing = false;
                                   });
                                 }
                               } else {
-                                _showErrorMessage('الحد الأدنى للإيداع هو ${NumberFormat('#,###').format(minAmount.toInt())} $currency');
+                                _showErrorMessage('الحد الأدنى للإيداع هو'.tr + ' ${NumberFormat('#,###').format(minAmount.toInt())} $currency');
                               }
                             } else {
-                              _showErrorMessage('يرجى إدخال المبلغ');
+                              _showErrorMessage('يرجى إدخال المبلغ'.tr);
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -1133,8 +1134,8 @@ class _MyWalletState extends State<MyWallet> {
                               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
-                              : const Text(
-                            "إيداع الآن",
+                              : Text(
+                            "إيداع الآن".tr,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,

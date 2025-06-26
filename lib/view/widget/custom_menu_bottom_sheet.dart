@@ -27,16 +27,14 @@ class CustomMenuBottomSheet extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Header
           _buildHeader(),
-
-          // Menu items
           Expanded(
             child: ListView(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               children: [
                 _buildAccountSection(),
                 _buildStoreSection(),
+                _buildSettingsSection(),
                 _buildSupportSection(),
                 _buildLogoutSection(),
               ],
@@ -52,7 +50,6 @@ class CustomMenuBottomSheet extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: 20),
       child: Column(
         children: [
-          // Handle bar
           Container(
             width: 50,
             height: 5,
@@ -69,18 +66,10 @@ class CustomMenuBottomSheet extends StatelessWidget {
   Widget _buildAccountSection() {
     return Column(
       children: [
-        _listHeader("الحساب"),
-        _menuListItem(
-          icon: Icons.person_outline,
-          title: "الملف الشخصي",
-          onTap: () {
-            Get.back();
-            _showEditProfileDialog();
-          },
-        ),
+        _listHeader("الحساب".tr),
         _menuListItem(
           icon: Icons.location_on_outlined,
-          title: "العناوين",
+          title: "العناوين".tr,
           onTap: () {
             Get.back();
             Get.toNamed(AppRoute.addressview);
@@ -94,10 +83,10 @@ class CustomMenuBottomSheet extends StatelessWidget {
   Widget _buildStoreSection() {
     return Column(
       children: [
-        _listHeader("المتجر"),
+        _listHeader("المتجر".tr),
         _menuListItem(
           icon: Icons.favorite_outline,
-          title: "المفضلة",
+          title: "المفضلة".tr,
           onTap: () {
             Get.back();
             Get.toNamed(AppRoute.myfavroite);
@@ -108,13 +97,30 @@ class CustomMenuBottomSheet extends StatelessWidget {
     );
   }
 
+  Widget _buildSettingsSection() {
+    return Column(
+      children: [
+        _listHeader("الإعدادات".tr),
+        _menuListItem(
+          icon: Icons.language_outlined,
+          title: "اللغة".tr,
+          onTap: () {
+            Get.back();
+            Get.toNamed(AppRoute.language);
+          },
+        ),
+        _listDivider(),
+      ],
+    );
+  }
+
   Widget _buildSupportSection() {
     return Column(
       children: [
-        _listHeader("الدعم"),
+        _listHeader("الدعم".tr),
         _menuListItem(
           icon: Icons.headset_mic_outlined,
-          title: "مركز الدعم",
+          title: "مركز الدعم".tr,
           onTap: () {
             Get.back();
             launchUrl(Uri.parse('tel:07707150740'));
@@ -122,7 +128,7 @@ class CustomMenuBottomSheet extends StatelessWidget {
         ),
         _menuListItem(
           icon: Icons.info_outline,
-          title: "حول التطبيق",
+          title: "حول التطبيق".tr,
           onTap: () {
             Get.back();
             _showAboutDialog();
@@ -138,7 +144,7 @@ class CustomMenuBottomSheet extends StatelessWidget {
       children: [
         _menuListItem(
           icon: Icons.logout_rounded,
-          title: "تسجيل الخروج",
+          title: "تسجيل الخروج".tr,
           onTap: () {
             Get.back();
             _showLogoutConfirmDialog();
@@ -178,8 +184,7 @@ class CustomMenuBottomSheet extends StatelessWidget {
     Widget? trailing,
     required VoidCallback onTap,
   }) {
-    // تحديد لون خاص لزر تسجيل الخروج
-    bool isLogout = title == "تسجيل الخروج";
+    bool isLogout = title == "تسجيل الخروج".tr;
 
     return ListTile(
       contentPadding: EdgeInsets.symmetric(vertical: 5),
@@ -216,9 +221,8 @@ class CustomMenuBottomSheet extends StatelessWidget {
   }
 
   void _showEditProfileDialog() {
-    // حذف أي controller موجود مسبقاً لتجنب التضارب
-    if (Get.isRegistered<ProfileController>()) {
-      Get.delete<ProfileController>();
+    if (!Get.isRegistered<ProfileController>()) {
+      Get.put(ProfileController());
     }
 
     Get.dialog(
@@ -251,7 +255,6 @@ class CustomMenuBottomSheet extends StatelessWidget {
   }
 }
 
-// Dialog تأكيد تسجيل الخروج
 class LogoutConfirmDialog extends StatelessWidget {
   const LogoutConfirmDialog({Key? key}) : super(key: key);
 
@@ -275,7 +278,6 @@ class LogoutConfirmDialog extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // أيقونة التحذير
           Container(
             width: 80,
             height: 80,
@@ -290,10 +292,8 @@ class LogoutConfirmDialog extends StatelessWidget {
             ),
           ),
           SizedBox(height: 20),
-
-          // العنوان
           Text(
-            'تأكيد تسجيل الخروج',
+            'تأكيد تسجيل الخروج'.tr,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -301,10 +301,8 @@ class LogoutConfirmDialog extends StatelessWidget {
             ),
           ),
           SizedBox(height: 15),
-
-          // النص التوضيحي
           Text(
-            'هل أنت متأكد من أنك تريد تسجيل الخروج من حسابك؟',
+            'هل أنت متأكد من أنك تريد تسجيل الخروج من حسابك؟'.tr,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -313,8 +311,6 @@ class LogoutConfirmDialog extends StatelessWidget {
             ),
           ),
           SizedBox(height: 30),
-
-          // أزرار التأكيد
           Row(
             children: [
               Expanded(
@@ -330,7 +326,7 @@ class LogoutConfirmDialog extends StatelessWidget {
                     elevation: 0,
                   ),
                   child: Text(
-                    'إلغاء',
+                    'إلغاء'.tr,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -342,8 +338,8 @@ class LogoutConfirmDialog extends StatelessWidget {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    Get.back(); // إغلاق الـ dialog
-                    settingsController.logout(); // تسجيل الخروج
+                    Get.back();
+                    settingsController.logout();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
@@ -355,7 +351,7 @@ class LogoutConfirmDialog extends StatelessWidget {
                     elevation: 0,
                   ),
                   child: Text(
-                    'تسجيل الخروج',
+                    'تسجيل الخروج'.tr,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -371,14 +367,12 @@ class LogoutConfirmDialog extends StatelessWidget {
   }
 }
 
-// Dialog تعديل الملف الشخصي
 class EditProfileDialog extends StatelessWidget {
   const EditProfileDialog({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ProfileController>(
-      init: ProfileController(), // إنشاء controller جديد
       builder: (controller) => Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -445,7 +439,7 @@ class EditProfileDialog extends StatelessWidget {
           ),
           SizedBox(width: 10),
           Text(
-            'تعديل الملف الشخصي',
+            'تعديل الملف الشخصي'.tr,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -454,13 +448,7 @@ class EditProfileDialog extends StatelessWidget {
           ),
           Spacer(),
           InkWell(
-            onTap: () {
-              // حذف الـ controller عند الإغلاق
-              if (Get.isRegistered<ProfileController>()) {
-                Get.delete<ProfileController>();
-              }
-              Get.back();
-            },
+            onTap: () => Get.back(),
             borderRadius: BorderRadius.circular(50),
             child: Container(
               padding: EdgeInsets.all(5),
@@ -504,7 +492,7 @@ class EditProfileDialog extends StatelessWidget {
                   : controller.currentImageUrl != null &&
                   controller.currentImageUrl!.isNotEmpty
                   ? Image.network(
-                "${AppLink.getUserProfile}/${controller.currentImageUrl}",
+                "${AppLink.imagestUsers}/${controller.currentImageUrl}",
                 fit: BoxFit.cover,
                 width: 100,
                 height: 100,
@@ -556,13 +544,13 @@ class EditProfileDialog extends StatelessWidget {
       children: [
         _buildTextField(
           controller: controller.nameController,
-          labelText: 'الاسم الكامل',
+          labelText: 'الاسم الكامل'.tr,
           prefixIcon: Icons.person,
         ),
         SizedBox(height: 15),
         _buildTextField(
           controller: controller.descriptionController,
-          labelText: 'وصف المتجر',
+          labelText: 'وصف المتجر'.tr,
           prefixIcon: Icons.store,
           maxLines: 3,
           isDescription: true,
@@ -570,7 +558,7 @@ class EditProfileDialog extends StatelessWidget {
         SizedBox(height: 15),
         _buildTextField(
           controller: controller.phoneController,
-          labelText: 'رقم الهاتف',
+          labelText: 'رقم الهاتف'.tr,
           prefixIcon: Icons.phone,
         ),
       ],
@@ -604,7 +592,7 @@ class EditProfileDialog extends StatelessWidget {
             child: Icon(prefixIcon, color: AppColor.primaryColor),
           ),
           alignLabelWithHint: isDescription,
-          hintText: isDescription ? 'اكتب وصفاً مختصراً عن متجرك...' : null,
+          hintText: isDescription ? 'اكتب وصفاً مختصراً عن متجرك...'.tr : null,
           hintStyle: TextStyle(
             color: Colors.grey.shade400,
             fontSize: 14,
@@ -618,7 +606,7 @@ class EditProfileDialog extends StatelessWidget {
   }
 
   Widget _buildActionButtons(ProfileController controller) {
-    return controller.statusRequest == StatusRequest.loading
+    return controller.updateStatusRequest == StatusRequest.loading
         ? Center(
       child: CircularProgressIndicator(
         color: AppColor.primaryColor,
@@ -628,13 +616,7 @@ class EditProfileDialog extends StatelessWidget {
       children: [
         Expanded(
           child: ElevatedButton(
-            onPressed: () {
-              // حذف الـ controller عند الإلغاء
-              if (Get.isRegistered<ProfileController>()) {
-                Get.delete<ProfileController>();
-              }
-              Get.back();
-            },
+            onPressed: () => Get.back(),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.grey.shade200,
               foregroundColor: Colors.grey.shade700,
@@ -644,7 +626,7 @@ class EditProfileDialog extends StatelessWidget {
               ),
               elevation: 0,
             ),
-            child: Text('إلغاء'),
+            child: Text('إلغاء'.tr),
           ),
         ),
         SizedBox(width: 15),
@@ -675,7 +657,6 @@ class EditProfileDialog extends StatelessWidget {
   }
 }
 
-// Dialog حول التطبيق
 class AboutAppDialog extends StatelessWidget {
   const AboutAppDialog({Key? key}) : super(key: key);
 
@@ -697,7 +678,6 @@ class AboutAppDialog extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // أيقونة التطبيق
           Container(
             width: 80,
             height: 80,
@@ -712,10 +692,8 @@ class AboutAppDialog extends StatelessWidget {
             ),
           ),
           SizedBox(height: 20),
-
-          // اسم التطبيق
           Text(
-            'متجر إلكتروني',
+            'متجر إلكتروني'.tr,
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -723,20 +701,16 @@ class AboutAppDialog extends StatelessWidget {
             ),
           ),
           SizedBox(height: 10),
-
-          // رقم الإصدار
           Text(
-            'الإصدار 1.0.0',
+            '1.0.0' + " " + "الإصدار".tr,
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey.shade600,
             ),
           ),
           SizedBox(height: 20),
-
-          // وصف التطبيق
           Text(
-            'تطبيق متجر إلكتروني شامل يوفر تجربة تسوق مميزة مع واجهة سهلة الاستخدام وخدمات متنوعة.',
+            'تطبيق متجر إلكتروني شامل يوفر تجربة تسوق مميزة مع واجهة سهلة الاستخدام وخدمات متنوعة.'.tr,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -745,8 +719,6 @@ class AboutAppDialog extends StatelessWidget {
             ),
           ),
           SizedBox(height: 30),
-
-          // معلومات إضافية
           Container(
             padding: EdgeInsets.all(15),
             decoration: BoxDecoration(
@@ -755,17 +727,15 @@ class AboutAppDialog extends StatelessWidget {
             ),
             child: Column(
               children: [
-                _buildInfoRow('المطور', 'فريق التطوير'),
+                _buildInfoRow('المطور'.tr, 'فريق التطوير'.tr),
                 SizedBox(height: 10),
-                _buildInfoRow('البريد الإلكتروني', 'support@example.com'),
+                _buildInfoRow('البريد الإلكتروني'.tr, 'support@example.com'),
                 SizedBox(height: 10),
-                _buildInfoRow('الهاتف', '07707150740'),
+                _buildInfoRow('الهاتف'.tr, '07707150740'),
               ],
             ),
           ),
           SizedBox(height: 30),
-
-          // زر الإغلاق
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -780,7 +750,7 @@ class AboutAppDialog extends StatelessWidget {
                 elevation: 0,
               ),
               child: Text(
-                'إغلاق',
+                'إغلاق'.tr,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,

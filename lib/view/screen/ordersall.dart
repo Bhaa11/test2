@@ -89,9 +89,9 @@ class _OrdersAllState extends State<OrdersAll> with SingleTickerProviderStateMix
           padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              _buildSegmentButton(0, 'انتظار\nالموافقة', Icons.access_time, Colors.orange, screenWidth, textScaleFactor),
-              _buildSegmentButton(1, 'قيد\nالتوصيل', Icons.delivery_dining, Colors.blue, screenWidth, textScaleFactor),
-              _buildSegmentButton(2, 'مكتملة', Icons.verified_outlined, Colors.green, screenWidth, textScaleFactor),
+              _buildSegmentButton(0, 'انتظار\nالموافقة'.tr, Icons.access_time, Colors.orange, screenWidth, textScaleFactor),
+              _buildSegmentButton(1, 'قيد\nالتوصيل'.tr, Icons.delivery_dining, Colors.blue, screenWidth, textScaleFactor),
+              _buildSegmentButton(2, 'مكتملة'.tr, Icons.verified_outlined, Colors.green, screenWidth, textScaleFactor),
             ],
           ),
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ecommercecourse/core/constant/color.dart';
+import 'package:get/get.dart';
 
 class ProductBadges {
   // ===================== عرض التلميح المخصص الحديث =====================
@@ -183,7 +184,7 @@ class ProductBadges {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      "سيتم الإغلاق تلقائياً خلال 5 ثوانٍ",
+                                      "سيتم الإغلاق تلقائياً خلال 5 ثوانٍ".tr,
                                       style: TextStyle(
                                         color: Colors.white.withOpacity(0.8),
                                         fontSize: 12,
@@ -328,8 +329,8 @@ class ProductBadges {
           onTap: () {
             _showModernTooltip(
               context,
-              "خصم حصري ${discount.toInt()}%",
-              "احصل على خصم فوري بنسبة ${discount.toInt()}% على هذا المنتج! عرض محدود لفترة قصيرة، لا تفوت الفرصة واطلب الآن.",
+              "خصم حصري".tr + " ${discount.toInt()}%",
+              "احصل على خصم فوري بنسبة".tr + " ${discount.toInt()}% " "على هذا المنتج! عرض محدود لفترة قصيرة، لا تفوت الفرصة واطلب الآن.",
               const Color(0xFFFF6B6B),
               Icons.local_fire_department,
             );
@@ -360,13 +361,13 @@ class ProductBadges {
           ),
         ],
       ),
-      child: const Row(
+      child:  Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.local_shipping, color: Colors.white, size: 14),
           SizedBox(width: 4),
           Text(
-            "توصيل مجاني",
+            "توصيل مجاني".tr,
             style: TextStyle(
               color: Colors.white,
               fontSize: 12,
@@ -384,8 +385,8 @@ class ProductBadges {
           onTap: () {
             _showModernTooltip(
               context,
-              "توصيل مجاني",
-              "نوصل لك هذا المنتج مجاناً إلى باب منزلك! لا توجد رسوم إضافية للشحن، وسيصلك المنتج في أسرع وقت ممكن.",
+              "توصيل مجاني".tr,
+              "نوصل لك هذا المنتج مجاناً إلى باب منزلك! لا توجد رسوم إضافية للشحن، وسيصلك المنتج في أسرع وقت ممكن.".tr,
               const Color(0xFF4ECDC4),
               Icons.local_shipping,
             );
@@ -399,13 +400,13 @@ class ProductBadges {
   // ===================== شارة "جديد" مع التلميح المحدث =====================
   static Widget buildNewBadge() {
     return buildCustomBadge(
-      text: "جديد",
+      text: "جديد".tr,
       backgroundColor: const Color(0xFF4CAF50),
       textColor: Colors.white,
       icon: Icons.fiber_new,
       fontSize: 12,
-      tooltipTitle: "منتج جديد ✨",
-      tooltipDescription: "هذا المنتج جديد تماماً ولم يتم استخدامه من قبل.",
+      tooltipTitle: "منتج جديد ✨".tr,
+      tooltipDescription: "هذا المنتج جديد تماماً ولم يتم استخدامه من قبل.".tr,
       tooltipIcon: Icons.fiber_new,
     );
   }
@@ -413,13 +414,13 @@ class ProductBadges {
   // ===================== شارة "الأكثر مبيعاً" مع التلميح المحدث =====================
   static Widget buildBestSellerBadge() {
     return buildCustomBadge(
-      text: "الأكثر مبيعاً",
+      text: "الأكثر مبيعاً".tr,
       backgroundColor: const Color(0xFFFF9800),
       textColor: Colors.white,
       icon: Icons.star,
       fontSize: 12,
-      tooltipTitle: "الأكثر مبيعاً ⭐",
-      tooltipDescription: "هذا المنتج من أكثر المنتجات مبيعاً في المتجر! اختيار العملاء المفضل بسبب جودته العالية وسعره المناسب.",
+      tooltipTitle: "الأكثر مبيعاً ⭐".tr,
+      tooltipDescription: "هذا المنتج من أكثر المنتجات مبيعاً في المتجر! اختيار العملاء المفضل بسبب جودته العالية وسعره المناسب.".tr,
       tooltipIcon: Icons.star,
     );
   }
@@ -427,19 +428,19 @@ class ProductBadges {
   // ===================== شارة "نفدت الكمية" مع التلميح المحدث =====================
   static Widget buildOutOfStockBadge() {
     return buildCustomBadge(
-      text: "نفدت الكمية",
+      text: "نفدت الكمية".tr,
       backgroundColor: const Color(0xFF757575),
       textColor: Colors.white,
       icon: Icons.block,
       fontSize: 12,
-      tooltipTitle: "نفدت الكمية 😔",
-      tooltipDescription: "عذراً، هذا المنتج غير متوفر حالياً. يمكنك إضافته لقائمة الرغبات ليتم إشعارك عند توفره مرة أخرى.",
+      tooltipTitle: "نفدت الكمية 😔".tr,
+      tooltipDescription: "عذراً، هذا المنتج غير متوفر حالياً. يمكنك إضافته لقائمة الرغبات ليتم إشعارك عند توفره مرة أخرى.".tr,
       tooltipIcon: Icons.block,
     );
   }
 
   // ===================== شارة حالة المنتج مع التلميح المحدث =====================
-  static Widget conditionBadge({required int condition}) {
+  static Widget conditionBadge({required String productStatus}) {
     String text;
     Color bgStart;
     Color bgEnd;
@@ -447,38 +448,38 @@ class ProductBadges {
     String tooltipTitle;
     String tooltipDescription;
 
-    switch (condition) {
-      case 0:
-        text = "جديد";
+    switch (productStatus) {
+      case "0":
+        text = "جديد".tr;
         bgStart = const Color(0xFF4CAF50).withOpacity(0.8);
         bgEnd = const Color(0xFF4CAF50);
         icon = Icons.fiber_new;
-        tooltipTitle = "منتج جديد";
-        tooltipDescription = "هذا المنتج جديد تماماً، لم يتم استخدامه مسبقاً.";
+        tooltipTitle = "منتج جديد".tr;
+        tooltipDescription = "هذا المنتج جديد تماماً، لم يتم استخدامه مسبقاً.".tr;
         break;
-      case 1:
-        text = "حاوية";
+      case "1":
+        text = "حاوية".tr;
         bgStart = const Color(0xFFFFA726).withOpacity(0.8);
         bgEnd = const Color(0xFFFFA726);
         icon = Icons.inventory_2;
         tooltipTitle = "منتج حاوية 📦";
-        tooltipDescription = "هذا المنتج مستورد من حاوية ويُعتبر شبه جديد. جودة ممتازة بسعر أقل من المنتج الجديد.";
+        tooltipDescription = "هذا المنتج مستورد من حاوية ويُعتبر شبه جديد. جودة ممتازة بسعر أقل من المنتج الجديد.".tr;
         break;
-      case 2:
-        text = "مستعمل";
+      case "2":
+        text = "مستعمل".tr;
         bgStart = const Color(0xFF9E9E9E).withOpacity(0.8);
         bgEnd = const Color(0xFF9E9E9E);
         icon = Icons.recycling;
-        tooltipTitle = "منتج مستعمل ♻️";
-        tooltipDescription = "هذا المنتج مستخدم مسبقاً.";
+        tooltipTitle = "منتج مستعمل ♻️".tr;
+        tooltipDescription = "هذا المنتج مستخدم مسبقاً.".tr;
         break;
       default:
-        text = "غير محدد";
+        text = "غير محدد".tr;
         bgStart = const Color(0xFF9E9E9E).withOpacity(0.8);
         bgEnd = const Color(0xFF9E9E9E);
         icon = Icons.help;
         tooltipTitle = "حالة غير محددة ❓";
-        tooltipDescription = "حالة هذا المنتج غير محددة. يرجى التواصل مع البائع للحصول على مزيد من التفاصيل.";
+        tooltipDescription = "حالة هذا المنتج غير محددة. يرجى التواصل مع البائع للحصول على مزيد من التفاصيل.".tr;
     }
 
     Widget badgeContent = Container(
@@ -591,8 +592,8 @@ class ProductBadges {
           onTap: () {
             _showModernTooltip(
               context,
-              "تقييم البائع ⭐",
-              "تقييم البائع ${rating.toStringAsFixed(1)} من 5 نجوم بناءً على $reviewCount تقييم من العملاء. هذا يعكس جودة الخدمة والمنتجات المقدمة.",
+              "تقييم البائع ⭐".tr,
+              "تقييم البائع".tr + " ${rating.toStringAsFixed(1)} " + "من 5 نجوم بناءً على".tr + " $reviewCount " + "تقييم من العملاء. هذا يعكس جودة الخدمة والمنتجات المقدمة.".tr,
               const Color(0xFFFBBF24),
               Icons.star,
             );

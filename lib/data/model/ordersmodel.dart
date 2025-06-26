@@ -24,7 +24,8 @@ class OrdersModel {
   String? itemsIdSeller;
   String? sellerRatingScore;
   String? sellerRatingComment;
-  String? usersPhone; // إضافة رقم هاتف المستخدم
+  String? usersPhone; // رقم هاتف المستخدم
+  String? itemsCount; // إضافة items_count على مستوى الطلب
   List<OrderItemData>? items;
 
   OrdersModel({
@@ -51,7 +52,8 @@ class OrdersModel {
     this.itemsIdSeller,
     this.sellerRatingScore,
     this.sellerRatingComment,
-    this.usersPhone, // إضافة رقم الهاتف في الكونستركتر
+    this.usersPhone,
+    this.itemsCount, // إضافة في الكونستركتر
     this.items,
   });
 
@@ -80,13 +82,15 @@ class OrdersModel {
     itemsIdSeller = json['items_id_seller']?.toString();
     sellerRatingScore = json['seller_rating_score']?.toString() ?? "0";
     sellerRatingComment = json['seller_rating_comment']?.toString() ?? "";
-    usersPhone = json['users_phone']?.toString(); // إضافة استخراج رقم الهاتف
+    usersPhone = json['users_phone']?.toString();
+    itemsCount = json['items_count']?.toString() ?? "1"; // إضافة items_count
 
     print("=== تشخيص تقييم البائع ===");
     print("Order ID: $ordersId");
     print("Seller Rating Score: $sellerRatingScore");
     print("Seller Rating Comment: $sellerRatingComment");
-    print("Users Phone: $usersPhone"); // طباعة رقم الهاتف للتشخيص
+    print("Users Phone: $usersPhone");
+    print("Items Count: $itemsCount"); // طباعة للتشخيص
 
     if (json['items'] != null) {
       items = <OrderItemData>[];
@@ -121,7 +125,8 @@ class OrdersModel {
     data['items_id_seller'] = itemsIdSeller;
     data['seller_rating_score'] = sellerRatingScore;
     data['seller_rating_comment'] = sellerRatingComment;
-    data['users_phone'] = usersPhone; // إضافة رقم الهاتف في toJson
+    data['users_phone'] = usersPhone;
+    data['items_count'] = itemsCount; // إضافة في toJson
 
     if (items != null) {
       data['items'] = items!.map((item) => item.toJson()).toList();
@@ -142,10 +147,10 @@ class OrderItemData {
   String? cartItemsid;
   String? itemsPrice;
   String? itemsDiscount;
-  String? itemsPriceDiscount; // إضافة السعر النهائي من قاعدة البيانات
-  String? itemsCount;
+  String? itemsPriceDiscount;
+  String? itemsCount; // items_count على مستوى المنتج
 
-  // معلومات البائع المباشرة
+// معلومات البائع المباشرة
   String? itemsIdSeller;
   String? sellerName;
   String? sellerImage;
@@ -176,12 +181,8 @@ class OrderItemData {
 
   factory OrderItemData.fromJson(Map<String, dynamic> json) {
     print("=== تحليل بيانات OrderItemData ===");
-    print("items_id: ${json['items_id']}");
-    print("items_name: ${json['items_name']}");
-    print("items_price: ${json['items_price']}");
-    print("items_discount: ${json['items_discount']}");
-    print("itemspricediscount: ${json['itemspricediscount']}");
-    print("seller_name: ${json['seller_name']}");
+    print("raw json: $json");
+    print("items_count من json: ${json['items_count']}"); // إضافة طباعة التشخيص
 
     return OrderItemData(
       itemsId: json['items_id']?.toString(),
@@ -193,17 +194,17 @@ class OrderItemData {
       cartItemsid: json['cart_itemsid']?.toString(),
       itemsPrice: json['items_price']?.toString(),
       itemsDiscount: json['items_discount']?.toString(),
-      itemsPriceDiscount: json['itemspricediscount']?.toString(), // السعر النهائي من قاعدة البيانات
-      itemsCount: json['items_count']?.toString() ?? "1",
+      itemsPriceDiscount: json['itemspricediscount']?.toString(),
+      itemsCount: json['items_count']?.toString() ?? "1", // استخراج items_count
 
-      // استخراج معلومات البائع المباشرة
+// استخراج معلومات البائع المباشرة
       itemsIdSeller: json['items_id_seller']?.toString(),
       sellerName: json['seller_name'],
       sellerImage: json['seller_image'],
       totalRatings: json['total_ratings']?.toString() ?? "0",
       averageRating: json['average_rating']?.toString() ?? "0",
 
-      // إنشاء ItemsModel كامل مع جميع البيانات المتوفرة
+// إنشاء ItemsModel كامل مع جميع البيانات من الـ JSON
       itemDetails: ItemsModel(
         itemsId: json['items_id']?.toString(),
         itemsName: json['items_name'],
@@ -211,34 +212,27 @@ class OrderItemData {
         itemsImage: json['items_image'],
         itemsPrice: json['items_price']?.toString(),
         itemsDiscount: json['items_discount']?.toString(),
-        itemsPriceDiscount: json['itemspricediscount']?.toString(), // استخدام السعر من قاعدة البيانات
-        itemsCount: json['items_count']?.toString() ?? "1",
-
-        // إضافة وصف افتراضي
-        itemsDesc: json['items_desc'] ?? "وصف تفصيلي للمنتج ${json['items_name'] ?? 'غير محدد'}",
-        itemsDescAr: json['items_desc_ar'] ?? "وصف تفصيلي للمنتج ${json['items_name_ar'] ?? json['items_name'] ?? 'غير محدد'}",
-
-        // معلومات البائع
-        itemsIdSeller: json['items_id_seller']?.toString(),
+        itemsPriceDiscount: json['itemspricediscount']?.toString(),
+        itemsCount: json['items_count']?.toString() ?? "1", // إضافة items_count في itemDetails أيضاً
+        itemsDesc: json['items_desc'],
+        itemsDescAr: json['items_desc_ar'],
+        itemsActive: json['items_active']?.toString(),
+        itemsDate: json['items_date'],
+        itemsCat: json['items_cat']?.toString(),
+        categoriesId: json['categories_id']?.toString(),
+        categoriesName: json['categories_name'],
+        categoriesNameAr: json['categories_name_ar'],
+        categoriesImage: json['categories_image'],
+        categoriesDatetime: json['categories_datetime'],
+        favorite: json['favorite']?.toString() ?? "0",
+        itemsPricedelivery: json['items_pricedelivery']?.toString(),
+        itemsCarVariants: json['items_car_variants'],
+        itemsProductStatus: json['items_product_status']?.toString(),
         sellerName: json['seller_name'],
         sellerImage: json['seller_image'],
         totalRatings: json['total_ratings']?.toString() ?? "0",
         averageRating: json['average_rating']?.toString() ?? "0",
-
-        // قيم افتراضية للحقول المطلوبة
-        itemsActive: "1",
-        itemsDate: DateTime.now().toString(),
-        itemsCat: json['items_cat']?.toString() ?? "1",
-        categoriesId: json['categories_id']?.toString() ?? "1",
-        categoriesName: json['categories_name'] ?? "فئة عامة",
-        categoriesNamaAr: json['categories_nama_ar'] ?? "فئة عامة",
-        categoriesImage: json['categories_image'] ?? "",
-        categoriesDatetime: DateTime.now().toString(),
-        favorite: "0",
-        itemsPricedelivery: "0",
-        itemsCarVariants: "",
-        itemsProductStatus: "1",
-        categoriesDatatime: DateTime.now().toString(),
+        itemsIdSeller: json['items_id_seller']?.toString(),
       ),
     );
   }
@@ -255,7 +249,7 @@ class OrderItemData {
     data['items_price'] = itemsPrice;
     data['items_discount'] = itemsDiscount;
     data['itemspricediscount'] = itemsPriceDiscount;
-    data['items_count'] = itemsCount;
+    data['items_count'] = itemsCount; // إضافة items_count في toJson
     data['items_id_seller'] = itemsIdSeller;
     data['seller_name'] = sellerName;
     data['seller_image'] = sellerImage;

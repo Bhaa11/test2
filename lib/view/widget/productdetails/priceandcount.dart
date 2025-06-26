@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ecommercecourse/core/constant/color.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 class PriceAndCountItems extends StatelessWidget {
@@ -8,6 +9,7 @@ class PriceAndCountItems extends StatelessWidget {
   final String price;
   final String? originalPrice;
   final String count;
+  final String? availableQuantity;
 
   const PriceAndCountItems({
     Key? key,
@@ -16,6 +18,7 @@ class PriceAndCountItems extends StatelessWidget {
     required this.price,
     this.originalPrice,
     required this.count,
+    this.availableQuantity,
   }) : super(key: key);
 
 // دالة لتنسيق الأرقام وإضافة الفاصلة
@@ -50,6 +53,8 @@ class PriceAndCountItems extends StatelessWidget {
           _buildPriceSection(),
           const SizedBox(height: 20),
           _buildQuantityControl(),
+          const SizedBox(height: 16),
+          _buildAvailableQuantity(),
         ],
       ),
     );
@@ -64,8 +69,8 @@ class PriceAndCountItems extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "السعر",
+             Text(
+              "السعر".tr,
               style: TextStyle(
                 color: Color(0xFF6B7280),
                 fontSize: 14,
@@ -74,7 +79,7 @@ class PriceAndCountItems extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              "${formatPrice(price)} د.ع",
+              "${formatPrice(price)} " + "د.ع".tr,
               style: TextStyle(
                 color: AppColor.primaryColor,
                 fontWeight: FontWeight.w700,
@@ -88,8 +93,8 @@ class PriceAndCountItems extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
-                "قبل الخصم",
+               Text(
+                "قبل الخصم".tr,
                 style: TextStyle(
                   color: Color(0xFF9CA3AF),
                   fontSize: 12,
@@ -98,7 +103,7 @@ class PriceAndCountItems extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                "${formatPrice(originalPrice!)} د.ع",
+                "${formatPrice(originalPrice!)} " + "د.ع".tr,
                 style: const TextStyle(
                   color: Color(0xFF9CA3AF),
                   fontSize: 16,
@@ -113,10 +118,15 @@ class PriceAndCountItems extends StatelessWidget {
   }
 
   Widget _buildQuantityControl() {
+// التحقق من الكمية المتوفرة
+    int currentCount = int.parse(count);
+    int maxQuantity = availableQuantity != null ? (int.tryParse(availableQuantity!) ?? 0) : 999;
+    bool canAdd = currentCount < maxQuantity;
+
     return Row(
       children: [
-        const Text(
-          "الكمية",
+         Text(
+          "الكمية".tr,
           style: TextStyle(
             color: Color(0xFF374151),
             fontSize: 16,
@@ -153,12 +163,60 @@ class PriceAndCountItems extends StatelessWidget {
               _buildControlButton(
                 onPressed: onAdd,
                 icon: Icons.add,
-                isEnabled: true,
+                isEnabled: canAdd,
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAvailableQuantity() {
+    if (availableQuantity == null) return const SizedBox.shrink();
+
+    int quantity = int.tryParse(availableQuantity!) ?? 0;
+
+    Color quantityColor;
+    String quantityText;
+
+    if (quantity > 10) {
+      quantityColor = const Color(0xFF059669);
+      quantityText = "متوفر".tr + " ($quantity " + "قطعة".tr + ")";
+    } else if (quantity > 0) {
+      quantityColor = const Color(0xFFD97706);
+      quantityText = "كمية محدودة".tr + " ($quantity " + "قطعة".tr + ")";
+    } else {
+      quantityColor = const Color(0xFFDC2626);
+      quantityText = "غير متوفر".tr;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          Icon(
+            Icons.inventory_2_outlined,
+            color: quantityColor,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 2),
+              Text(
+                quantityText,
+                style: TextStyle(
+                  color: quantityColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

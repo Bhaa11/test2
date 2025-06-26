@@ -34,6 +34,11 @@ class HomeControllerImp extends HomeController {
   List settingsdata = [];
   bool isRefreshing = false;
 
+  // تغيير نوع البيانات لتتوافق مع CarSelectionDialog
+  Map<String, Map<String, List<String>>> carData = {};
+  bool carDataLoaded = false;
+  String? carDataError;
+
   @override
   initialData() {
     lang = myServices.sharedPreferences.getString("lang");
@@ -52,6 +57,7 @@ class HomeControllerImp extends HomeController {
   @override
   Future<void> getdata() async {
     statusRequest = StatusRequest.loading;
+    update();
     String users_id = myServices.sharedPreferences.getString("id")!;
     var response = await homedata.getData(users_id);
     statusRequest = handlingData(response);
@@ -68,25 +74,23 @@ class HomeControllerImp extends HomeController {
   @override
   Future<void> refreshData() async {
     isRefreshing = true;
+    statusRequest = StatusRequest.loading;
     update();
 
     try {
       String users_id = myServices.sharedPreferences.getString("id")!;
       var response = await homedata.getData(users_id);
-      if (handlingData(response) == StatusRequest.success) {
+      statusRequest = handlingData(response);
+      if (statusRequest == StatusRequest.success) {
         if (response['status'] == "success") {
           _clearData();
           _updateData(response);
-          Get.rawSnackbar(
-            messageText: Text(
-              'تم التحديث بنجاح'.tr,
-              style: const TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 1),
-          );
+        } else {
+          statusRequest = StatusRequest.failure;
         }
       }
+    } catch (e) {
+      statusRequest = StatusRequest.serverfailure;
     } finally {
       isRefreshing = false;
       update();
@@ -97,6 +101,9 @@ class HomeControllerImp extends HomeController {
     categories.clear();
     items.clear();
     settingsdata.clear();
+    carData.clear();
+    carDataLoaded = false;
+    carDataError = null;
   }
 
   void _updateData(Map response) {
@@ -108,6 +115,64 @@ class HomeControllerImp extends HomeController {
     bodyHomeCard = settingsdata[0]['settings_bodyhome'];
     deliveryTime = settingsdata[0]['settings_deliverytime'];
     myServices.sharedPreferences.setString("deliverytime", deliveryTime);
+
+    // تحميل بيانات السيارات من قاعدة البيانات
+    _loadCarData();
+  }
+
+  // دالة لتحويل البيانات إلى النوع المطلوب
+  Map<String, Map<String, List<String>>> _convertCarData(Map<String, dynamic> rawData) {
+    Map<String, Map<String, List<String>>> convertedData = {};
+
+    rawData.forEach((brand, models) {
+      if (models is Map) {
+        Map<String, List<String>> convertedModels = {};
+
+        (models as Map<String, dynamic>).forEach((model, years) {
+          if (years is List) {
+            convertedModels[model] = years.map((year) => year.toString()).toList();
+          }
+        });
+        convertedData[brand] = convertedModels;
+      }
+    });
+
+    return convertedData;
+  }
+
+  // دالة لتحميل بيانات السيارات من الإعدادات
+  void _loadCarData() {
+    try {
+      // البحث عن settings_name_cars في بيانات الإعدادات
+      var carsSettings = settingsdata.firstWhere(
+            (setting) => setting.containsKey('settings_name_cars'),
+        orElse: () => null,
+      );
+
+      if (carsSettings != null && carsSettings['settings_name_cars'] != null) {
+        String carDataString = carsSettings['settings_name_cars'];
+
+        if (carDataString.isNotEmpty) {
+          Map<String, dynamic> rawCarData = Map<String, dynamic>.from(json.decode(carDataString));
+          carData = _convertCarData(rawCarData);
+          carDataLoaded = true;
+          carDataError = null;
+          print('Car data loaded successfully from database');
+        } else {
+          carDataLoaded = false;
+          carDataError = 'بيانات السيارات فارغة في قاعدة البيانات';
+          print('Car data is empty in database');
+        }
+      } else {
+        carDataLoaded = false;
+        carDataError = 'لم يتم العثور على بيانات السيارات في قاعدة البيانات';
+        print('Car data not found in database');
+      }
+    } catch (e) {
+      print('Error loading car data: $e');
+      carDataLoaded = false;
+      carDataError = 'خطأ في تحميل بيانات السيارات: ${e.toString()}';
+    }
   }
 
   @override
@@ -123,29 +188,47 @@ class HomeControllerImp extends HomeController {
     Get.toNamed("productdetails", arguments: {"itemsmodel": itemsModel});
   }
 
-  // دالة لاستخراج الصورة الأولى من JSON
+  // إضافة دالة getFirstImage فقط
   String getFirstImage(String? itemsImage) {
     if (itemsImage == null || itemsImage.isEmpty) {
       return '';
     }
 
     try {
-      // محاولة تحليل JSON
-      Map<String, dynamic> imageData = json.decode(itemsImage);
+      // محاولة تحليل JSON أولاً
+      if (itemsImage.startsWith('{') || itemsImage.startsWith('[')) {
+        dynamic imageData = json.decode(itemsImage);
 
-      // التحقق من وجود مصفوفة الصور
-      if (imageData.containsKey('images') && imageData['images'] is List) {
-        List images = imageData['images'];
-        if (images.isNotEmpty) {
-          return images[0].toString();
+        if (imageData is Map<String, dynamic>) {
+          // التحقق من وجود مصفوفة الصور
+          if (imageData.containsKey('images') && imageData['images'] is List) {
+            List images = imageData['images'];
+            if (images.isNotEmpty) {
+              return images[0].toString().trim();
+            }
+          }
+        } else if (imageData is List) {
+          // إذا كانت البيانات عبارة عن مصفوفة مباشرة
+          if (imageData.isNotEmpty) {
+            return imageData[0].toString().trim();
+          }
+        }
+      } else {
+        // التعامل مع الصور المفصولة بفاصلة
+        List<String> imagesList = itemsImage.split(',');
+        if (imagesList.isNotEmpty) {
+          return imagesList[0].trim();
         }
       }
 
-      // إذا لم توجد صور، إرجاع فارغ
       return '';
     } catch (e) {
-      // في حالة فشل تحليل JSON، قد تكون الصورة بالتنسيق القديم
-      return itemsImage;
+      print('Error parsing image data: $e');
+      // في حالة فشل تحليل JSON، إرجاع النص كما هو
+      if (itemsImage.contains(',')) {
+        return itemsImage.split(',')[0].trim();
+      }
+      return itemsImage.trim();
     }
   }
 }
@@ -156,6 +239,12 @@ class SearchMixController extends GetxController {
   HomeData homedata = HomeData(Get.find());
   TextEditingController? search;
   bool isSearch = false;
+
+  @override
+  void onInit() {
+    statusRequest = StatusRequest.none;
+    super.onInit();
+  }
 
   searchData() async {
     statusRequest = StatusRequest.loading;
@@ -176,8 +265,9 @@ class SearchMixController extends GetxController {
 
   checkSearch(val) {
     if (val == "") {
-      statusRequest = StatusRequest.none;
+      statusRequest = StatusRequest.success; // تغيير من none إلى success
       isSearch = false;
+      listdata.clear(); // مسح نتائج البحث
     }
     update();
   }
@@ -186,31 +276,5 @@ class SearchMixController extends GetxController {
     isSearch = true;
     searchData();
     update();
-  }
-
-  // دالة لاستخراج الصورة الأولى من JSON
-  String getFirstImage(String? itemsImage) {
-    if (itemsImage == null || itemsImage.isEmpty) {
-      return '';
-    }
-
-    try {
-      // محاولة تحليل JSON
-      Map<String, dynamic> imageData = json.decode(itemsImage);
-
-      // التحقق من وجود مصفوفة الصور
-      if (imageData.containsKey('images') && imageData['images'] is List) {
-        List images = imageData['images'];
-        if (images.isNotEmpty) {
-          return images[0].toString();
-        }
-      }
-
-      // إذا لم توجد صور، إرجاع فارغ
-      return '';
-    } catch (e) {
-      // في حالة فشل تحليل JSON، قد تكون الصورة بالتنسيق القديم
-      return itemsImage;
-    }
   }
 }

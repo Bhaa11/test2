@@ -92,7 +92,7 @@ class ItemsAddStepOne extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'معلومات المنتج',
+                    'معلومات المنتج'.tr,
                     style: TextStyle(
                       fontSize: 20.sp,
                       fontWeight: FontWeight.bold,
@@ -101,7 +101,7 @@ class ItemsAddStepOne extends StatelessWidget {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    'أدخل البيانات الأساسية للمنتج والملفات التوضيحية',
+                    'أدخل البيانات الأساسية للمنتج'.tr,
                     style: TextStyle(
                       fontSize: 14.sp,
                       color: AppColor.grey,
@@ -122,7 +122,7 @@ class ItemsAddStepOne extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInputLabel('اسم المنتج', Icons.edit_rounded),
+        _buildInputLabel('اسم المنتج'.tr, Icons.edit_rounded),
         SizedBox(height: 8.h),
         TextFormField(
           controller: controller.name,
@@ -130,7 +130,7 @@ class ItemsAddStepOne extends StatelessWidget {
           textAlign: TextAlign.start,
           style: TextStyle(fontSize: 16.sp, color: AppColor.grey2),
           decoration: _getInputDecoration(
-            hintText: 'أدخل اسم المنتج',
+            hintText: 'أدخل اسم المنتج'.tr,
           ),
         ),
       ],
@@ -141,7 +141,7 @@ class ItemsAddStepOne extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInputLabel('وصف المنتج', Icons.description_rounded),
+        _buildInputLabel('وصف المنتج'.tr, Icons.description_rounded),
         SizedBox(height: 8.h),
         TextFormField(
           controller: controller.desc,
@@ -150,7 +150,7 @@ class ItemsAddStepOne extends StatelessWidget {
           textAlign: TextAlign.start,
           style: TextStyle(fontSize: 16.sp, color: AppColor.grey2),
           decoration: _getInputDecoration(
-            hintText: 'أضف وصفاً تفصيلياً للمنتج',
+            hintText: 'أضف وصفاً تفصيلياً للمنتج'.tr,
           ),
         ),
       ],
@@ -161,14 +161,14 @@ class ItemsAddStepOne extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInputLabel('حالة المنتج', Icons.category_rounded),
+        _buildInputLabel('حالة المنتج'.tr, Icons.category_rounded),
         SizedBox(height: 12.h),
         Row(
           children: [
             Expanded(
               child: _buildStatusOption(
                 controller,
-                title: 'جديد',
+                title: 'جديد'.tr,
                 value: 0,
                 color: Colors.green.shade600,
                 iconData: Icons.new_releases_rounded,
@@ -178,7 +178,7 @@ class ItemsAddStepOne extends StatelessWidget {
             Expanded(
               child: _buildStatusOption(
                 controller,
-                title: 'حاوية',
+                title: 'حاوية'.tr,
                 value: 1,
                 color: Colors.blue.shade600,
                 iconData: Icons.inventory_rounded,
@@ -188,7 +188,7 @@ class ItemsAddStepOne extends StatelessWidget {
             Expanded(
               child: _buildStatusOption(
                 controller,
-                title: 'مستعمل',
+                title: 'مستعمل'.tr,
                 value: 2,
                 color: Colors.amber.shade700,
                 iconData: Icons.history_rounded,
@@ -199,7 +199,7 @@ class ItemsAddStepOne extends StatelessWidget {
         if (controller.showStatusError) ...[
           SizedBox(height: 8.h),
           Text(
-            'يرجى اختيار حالة المنتج',
+            'يرجى اختيار حالة المنتج'.tr,
             style: TextStyle(
               fontSize: 12.sp,
               color: Colors.red.shade700,
@@ -279,7 +279,7 @@ class ItemsAddStepOne extends StatelessWidget {
       children: [
         Row(
           children: [
-            _buildInputLabel('ملفات المنتج', Icons.perm_media_rounded),
+            _buildInputLabel('ملفات المنتج'.tr, Icons.perm_media_rounded),
             Spacer(),
             Text(
               '${controller.selectedFiles.length}/10',
@@ -295,14 +295,78 @@ class ItemsAddStepOne extends StatelessWidget {
         ),
         SizedBox(height: 12.h),
 
+        // عرض حالة الضغط
+        if (controller.isCompressing) ...[
+          Container(
+            padding: EdgeInsets.all(16.r),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 20.w,
+                      height: 20.h,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        value: controller.compressionProgressPercent,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade600),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            controller.compressionProgress,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.blue.shade700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          if (controller.compressionTotalFiles > 0) ...[
+                            SizedBox(height: 4.h),
+                            Text(
+                              '${controller.compressionCurrentFile}/${controller.compressionTotalFiles} ' + 'ملفات'.tr,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: Colors.blue.shade600,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12.h),
+                LinearProgressIndicator(
+                  value: controller.compressionProgressPercent,
+                  backgroundColor: Colors.blue.shade100,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade600),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 16.h),
+        ],
+
         // منطقة رفع الملفات
         GestureDetector(
-          onTap: controller.selectedFiles.length < 10 ? controller.showOptionFiles : null,
+          onTap: (controller.selectedFiles.length < 10 && !controller.isCompressing)
+              ? controller.showOptionFiles
+              : null,
           child: Container(
             height: 160.h,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: controller.selectedFiles.length < 10
+              color: (controller.selectedFiles.length < 10 && !controller.isCompressing)
                   ? Colors.grey.shade50
                   : Colors.grey.shade100,
               borderRadius: BorderRadius.circular(16.r),
@@ -328,7 +392,9 @@ class ItemsAddStepOne extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Icons.file_upload_outlined,
+                    controller.isCompressing
+                        ? Icons.hourglass_empty
+                        : Icons.file_upload_outlined,
                     size: 36.r,
                     color: controller.showFilesError
                         ? Colors.red.shade400
@@ -337,7 +403,9 @@ class ItemsAddStepOne extends StatelessWidget {
                 ),
                 SizedBox(height: 16.h),
                 Text(
-                  'إضافة ملفات للمنتج',
+                  controller.isCompressing
+                      ? 'جاري ضغط الملفات...'.tr
+                      : 'إضافة ملفات للمنتج'.tr,
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
@@ -348,7 +416,9 @@ class ItemsAddStepOne extends StatelessWidget {
                 ),
                 SizedBox(height: 8.h),
                 Text(
-                  'اضغط هنا لاختيار صور وفيديوهات\n(حتى 10 ملفات)',
+                  controller.isCompressing
+                      ? 'يرجى الانتظار حتى انتهاء عملية الضغط'.tr
+                      : 'اضغط هنا لاختيار صور وفيديوهات'.tr,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14.sp,
@@ -370,7 +440,7 @@ class ItemsAddStepOne extends StatelessWidget {
                   childAspectRatio: 1,
                 ),
                 itemCount: controller.selectedFiles.length +
-                    (controller.selectedFiles.length < 10 ? 1 : 0),
+                    (controller.selectedFiles.length < 10 && !controller.isCompressing ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == controller.selectedFiles.length) {
                     // زر إضافة ملف جديد
@@ -422,6 +492,16 @@ class ItemsAddStepOne extends StatelessWidget {
                             width: double.infinity,
                             height: double.infinity,
                             fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey.shade200,
+                                child: Icon(
+                                  Icons.broken_image,
+                                  color: Colors.grey.shade400,
+                                  size: 32.r,
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -436,6 +516,13 @@ class ItemsAddStepOne extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: Colors.red.shade600,
                               shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
                             ),
                             child: Icon(
                               Icons.close,
@@ -446,29 +533,58 @@ class ItemsAddStepOne extends StatelessWidget {
                         ),
                       ),
                       // مؤشر نوع الملف
-                      if (isVideo)
-                        Positioned(
-                          bottom: 4,
-                          left: 4,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 6.w,
-                              vertical: 2.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.7),
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            child: Text(
-                              'فيديو',
-                              style: TextStyle(
+                      Positioned(
+                        bottom: 4,
+                        left: 4,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6.w,
+                            vertical: 2.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isVideo ? Icons.videocam : Icons.photo,
                                 color: Colors.white,
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w600,
+                                size: 10.r,
                               ),
-                            ),
+                              SizedBox(width: 2.w),
+                              Text(
+                                isVideo ? 'فيديو'.tr : 'صورة'.tr,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                      ),
+                      // مؤشر أن الملف مضغوط
+                      Positioned(
+                        top: 4,
+                        left: 4,
+                        child: Container(
+                          padding: EdgeInsets.all(2.r),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade600,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   );
                 },
@@ -489,7 +605,7 @@ class ItemsAddStepOne extends StatelessWidget {
               ),
               SizedBox(width: 8.w),
               Text(
-                'يجب اختيار ملف واحد على الأقل للمنتج',
+                'يجب اختيار ملف واحد على الأقل للمنتج'.tr,
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: Colors.red.shade700,
@@ -497,7 +613,7 @@ class ItemsAddStepOne extends StatelessWidget {
               ),
             ],
           ),
-        ] else if (controller.selectedFiles.isNotEmpty) ...[
+        ] else if (controller.selectedFiles.isNotEmpty && !controller.isCompressing) ...[
           SizedBox(height: 12.h),
           Row(
             children: [
@@ -508,7 +624,7 @@ class ItemsAddStepOne extends StatelessWidget {
               ),
               SizedBox(width: 8.w),
               Text(
-                'تم رفع ${controller.selectedFiles.length} ملف بنجاح',
+                'تم رفع'.tr +  ' ${controller.selectedFiles.length} ' + 'ملف بنجاح'.tr,
                 style: TextStyle(
                   fontSize: 14.sp,
                   color: Colors.green,
@@ -525,7 +641,7 @@ class ItemsAddStepOne extends StatelessWidget {
                   color: Colors.red.shade700,
                 ),
                 label: Text(
-                  'حذف الكل',
+                  'حذف الكل'.tr,
                   style: TextStyle(
                     color: Colors.red.shade700,
                     fontSize: 14.sp,
@@ -543,7 +659,7 @@ class ItemsAddStepOne extends StatelessWidget {
         ],
 
         // معلومات إضافية
-        if (controller.selectedFiles.isNotEmpty) ...[
+        if (controller.selectedFiles.isNotEmpty && !controller.isCompressing) ...[
           SizedBox(height: 12.h),
           Container(
             padding: EdgeInsets.all(12.r),
@@ -554,20 +670,59 @@ class ItemsAddStepOne extends StatelessWidget {
                 color: Colors.blue.shade200,
               ),
             ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.blue.shade600,
+                      size: 20.r,
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        'الصور:'.tr + ' ${controller.selectedFiles.where((f) => controller.isImageFile(f)).length} | '+ 'الفيديوهات:'.tr + ' ${controller.selectedFiles.where((f) => controller.isVideoFile(f)).length}',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.blue.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        // تحذير عند الوصول للحد الأقصى
+        if (controller.selectedFiles.length >= 10) ...[
+          SizedBox(height: 12.h),
+          Container(
+            padding: EdgeInsets.all(12.r),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade50,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(
+                color: Colors.orange.shade200,
+              ),
+            ),
             child: Row(
               children: [
                 Icon(
-                  Icons.info_outline,
-                  color: Colors.blue.shade600,
+                  Icons.warning_amber_rounded,
+                  color: Colors.orange.shade600,
                   size: 20.r,
                 ),
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Text(
-                    'الصور: ${controller.selectedFiles.where((f) => controller.isImageFile(f)).length} | الفيديوهات: ${controller.selectedFiles.where((f) => controller.isVideoFile(f)).length}',
+                    'وصلت للحد الأقصى من الملفات (10 ملفات)'.tr,
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: Colors.blue.shade700,
+                      color: Colors.orange.shade700,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -601,7 +756,7 @@ class ItemsAddStepOne extends StatelessWidget {
         ],
       ),
       child: ElevatedButton(
-        onPressed: controller.nextStep,
+        onPressed: controller.isCompressing ? null : controller.nextStep,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           foregroundColor: Colors.white,
@@ -610,11 +765,33 @@ class ItemsAddStepOne extends StatelessWidget {
             borderRadius: BorderRadius.circular(16.r),
           ),
         ),
-        child: Row(
+        child: controller.isCompressing
+            ? Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 20.w,
+              height: 20.h,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Text(
+              'جاري ضغط الملفات...'.tr,
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        )
+            : Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'المتابعة للخطوة التالية',
+              'المتابعة للخطوة التالية'.tr,
               style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.bold,

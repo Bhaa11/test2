@@ -8,6 +8,10 @@ import 'package:ecommercecourse/core/class/handlingdataview.dart';
 import 'package:ecommercecourse/core/constant/color.dart';
 import 'package:ecommercecourse/core/class/crud.dart';
 import 'package:ecommercecourse/linkapi.dart';
+import 'package:ecommercecourse/view/widget/home/product_badges.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:visibility_detector/visibility_detector.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 // Model للبائع
 class SellerDetailsModel {
@@ -226,6 +230,34 @@ class SellerDetailsController extends GetxController {
     sellerDetails = null;
     hasSellerData = false;
     getSellerProducts();
+  }
+
+  // دالة استخراج الصورة الأولى
+  String getFirstImage(String? itemsImage) {
+    if (itemsImage == null || itemsImage.isEmpty) return '';
+
+    try {
+      // محاولة تحليل JSON
+      if (itemsImage.startsWith('{') || itemsImage.startsWith('[')) {
+        final decoded = itemsImage.replaceAll(RegExp(r'[{}"\[\]]'), '');
+        final parts = decoded.split(',');
+        for (String part in parts) {
+          if (part.contains('images:')) {
+            final imagePart = part.split('images:')[1];
+            final images = imagePart.split(',');
+            if (images.isNotEmpty) {
+              return images[0].trim();
+            }
+          }
+        }
+      }
+
+      // إذا لم يكن JSON، إرجاع النص كما هو
+      return itemsImage;
+    } catch (e) {
+      // في حالة الخطأ، إرجاع النص الأصلي
+      return itemsImage;
+    }
   }
 }
 
@@ -505,20 +537,7 @@ class SellerDetailsView extends StatelessWidget {
           // المنتجات
           controller.sellerProducts.isEmpty
               ? _buildEmptyProducts()
-              : GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.8,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: controller.sellerProducts.length,
-            itemBuilder: (context, index) {
-              return _buildProductCard(controller.sellerProducts[index], controller);
-            },
-          ),
+              : _buildEnhancedItemsList(controller),
 
           const SizedBox(height: 20),
         ],
@@ -554,109 +573,246 @@ class SellerDetailsView extends StatelessWidget {
     );
   }
 
-  Widget _buildProductCard(SellerProductModel product, SellerDetailsController controller) {
-    return GestureDetector(
-      onTap: () => controller.goToProductDetails(product),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // صورة المنتج
-            Expanded(
-              flex: 3,
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                ),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                  child: _buildProductImage(product.itemsImage),
-                ),
-              ),
-            ),
+  Widget _buildEnhancedItemsList(SellerDetailsController controller) {
+    return AnimationLimiter(
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 0),
+        itemCount: (controller.sellerProducts.length / 2).ceil(),
+        cacheExtent: 1500,
+        addAutomaticKeepAlives: true,
+        addRepaintBoundaries: true,
+        itemBuilder: (context, index) {
+          int firstIndex = index * 2;
+          int secondIndex = firstIndex + 1;
 
-            // تفاصيل المنتج
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // اسم المنتج
-                    Text(
-                      product.itemsName ?? "",
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColor.black,
+          return AnimationConfiguration.staggeredList(
+            position: index,
+            duration: const Duration(milliseconds: 375),
+            child: SlideAnimation(
+              verticalOffset: 50.0,
+              child: FadeInAnimation(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildProductCard(
+                          controller.sellerProducts[firstIndex],
+                          controller,
+                          firstIndex,
+                        ),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    // التقييم
-                    Row(
-                      children: [
-                        Icon(Icons.star, color: Colors.amber, size: 12),
-                        const SizedBox(width: 4),
-                        Text(
-                          product.itemsRating ?? "0.0",
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const Spacer(),
-
-                    // السعر
-                    Row(
-                      children: [
-                        if (product.itemsDiscount != "0" && product.itemsDiscount != null)
-                          Text(
-                            "${product.itemsPrice} د.ع",
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.grey[500],
-                              decoration: TextDecoration.lineThrough,
-                            ),
-                          ),
-                        if (product.itemsDiscount != "0" && product.itemsDiscount != null)
-                          const SizedBox(width: 4),
+                      const SizedBox(width: 10),
+                      if (secondIndex < controller.sellerProducts.length)
                         Expanded(
-                          child: Text(
-                            "${product.itemsPriceDiscount ?? product.itemsPrice} د.ع",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: AppColor.primaryColor,
-                            ),
+                          child: _buildProductCard(
+                            controller.sellerProducts[secondIndex],
+                            controller,
+                            secondIndex,
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        )
+                      else
+                        const Expanded(child: SizedBox()),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildProductCard(SellerProductModel product, SellerDetailsController controller, int index) {
+    double discount = double.tryParse(product.itemsDiscount ?? "0") ?? 0;
+    double originalPrice = double.tryParse(product.itemsPrice ?? "0") ?? 0;
+    double deliveryPrice = 0;
+    bool hasDiscount = discount > 0;
+    bool hasFreeDelivery = deliveryPrice == 0;
+
+    // استخراج الصورة الأولى
+    String firstImage = controller.getFirstImage(product.itemsImage);
+
+    return VisibilityDetector(
+      key: Key('seller-product-${product.itemsId}-$index'),
+      onVisibilityChanged: (visibilityInfo) {
+        // يمكن إضافة منطق إضافي هنا عند الحاجة
+      },
+      child: GestureDetector(
+        onTap: () => controller.goToProductDetails(product),
+        child: Container(
+          height: 280,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // صورة المنتج
+                  Expanded(
+                    flex: 3,
+                    child: Container(
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
+                        child: firstImage.isNotEmpty
+                            ? CachedNetworkImage(
+                          imageUrl: "${AppLink.imagestItems}/$firstImage",
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: Colors.grey[200],
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(AppColor.primaryColor),
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.grey[200],
+                            child: const Icon(
+                              Icons.image_not_supported,
+                              color: Colors.grey,
+                              size: 40,
+                            ),
+                          ),
+                          memCacheWidth: 400,
+                          memCacheHeight: 400,
+                          maxWidthDiskCache: 400,
+                          maxHeightDiskCache: 400,
+                          fadeInDuration: const Duration(milliseconds: 300),
+                          fadeOutDuration: const Duration(milliseconds: 300),
+                        )
+                            : Container(
+                          color: Colors.grey[200],
+                          child: const Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey,
+                            size: 40,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // تفاصيل المنتج
+                  Expanded(
+                    flex: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // اسم المنتج
+                          Text(
+                            product.itemsName ?? "",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColor.black,
+                              height: 1.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textDirection: TextDirection.rtl,
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          // عدد القطع المتوفرة
+                          Builder(
+                            builder: (context) {
+                              int itemCount = int.tryParse(product.itemsCount ?? '0') ?? 0;
+                              bool isOutOfStock = itemCount == 0;
+
+                              return Text(
+                                isOutOfStock ? "نفذ المخزون".tr : "متوفر: ".tr + "${product.itemsCount}" + " قطعة".tr,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isOutOfStock ? Colors.red : Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              );
+                            },
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          // الأسعار
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (hasDiscount) ...[
+                                Text(
+                                  "${product.itemsPriceDiscount} " + "د.ع".tr,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColor.primaryColor,
+                                  ),
+                                ),
+                                Text(
+                                  "${product.itemsPrice} " + "د.ع".tr,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey[500],
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
+                                ),
+                              ] else ...[
+                                Text(
+                                  "${product.itemsPrice} " + "د.ع".tr,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColor.primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              // الشارات
+              Positioned(
+                top: 6,
+                right: 6,
+                child: ProductBadges.buildBadgesColumn(
+                  hasDiscount: hasDiscount,
+                  discount: discount,
+                  hasFreeDelivery: hasFreeDelivery,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
