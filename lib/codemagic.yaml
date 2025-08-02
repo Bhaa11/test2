@@ -1,4 +1,4 @@
-﻿workflows:
+workflows:
   ios-workflow:
     name: iOS Workflow
     instance_type: mac_mini_m1
@@ -15,13 +15,14 @@
           platform :ios, '13.0'
           
           target 'Runner' do
-            use_frameworks!use_modular_headers!
+            use_frameworks!
+            use_modular_headers!
             pod 'Flutter', :path => 'Flutter'
           end
           
           post_install do |installer|
             installer.pods_project.targets.each do |target|
-              target.build_configurations.eachdo |config|
+              target.build_configurations.each do |config|
                 config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
               end
             end
