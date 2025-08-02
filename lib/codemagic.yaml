@@ -1,10 +1,45 @@
+﻿workflows:
+  ios-workflow:
+    name: iOS Workflow
+    instance_type: mac_mini_m1
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Setup Podfile
+        script: |
+          cd ios
+          rm -f Podfile
+          cat > Podfile << 'EOF'
+          platform :ios, '13.0'
+          
+          target 'Runner' do
+            use_frameworks!use_modular_headers!
+            pod 'Flutter', :path => 'Flutter'
+          end
+          
+          post_install do |installer|
+            installer.pods_project.targets.each do |target|
+              target.build_configurations.eachdo |config|
+                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+              end
+            end
+          end
+          EOF
 
-flutter-ios-simulator:
-  name: Flutter iOS Simulator
-  environment:
-    flutter: 3.27.3
-    xcode: 16.2
-  scripts:
-    - flutter build ios --simulator --flavor staging
-  artifacts:
-    - build/ios/iphonesimulator/Runner.app
+      - name: Update project settings
+        script: |
+          cd ios
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 12.0;/IPHONEOS_DEPLOYMENT_TARGET = 13.0;/g' Runner.xcodeproj/project.pbxproj
+      - name: Build iOS
+        script: |
+          flutter clean
+          flutter pub get
+          cd ios
+          pod install --repo-update
+          cd ..
+          flutter build ios --release --no-codesign
+    
+    artifacts:
+      - build/ios/ipa/*.ipa
