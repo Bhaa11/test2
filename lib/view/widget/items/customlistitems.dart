@@ -33,7 +33,7 @@ class CustomListItems extends GetView<ItemsControllerImp> {
                         tag: "${itemsModel.itemsId}",
                         child: CachedNetworkImage(
                           imageUrl:
-                          AppLink.imagestItems + "/" + itemsModel.itemsImage!,
+                          "${AppLink.imagestItems}/${itemsModel.itemsImage!}",
                           height: 100,
                           fit: BoxFit.fill,
                         ),
@@ -53,7 +53,7 @@ class CustomListItems extends GetView<ItemsControllerImp> {
                               margin: const EdgeInsets.only(top: 5),
                               child: const Icon(Icons.timer_sharp , color: AppColor.grey,)),
                           const SizedBox(width: 4),
-                          Text("${controller.deliveryTime}", textAlign: TextAlign.center , style: const TextStyle(fontFamily: "sans"),),
+                          Text(controller.deliveryTime, textAlign: TextAlign.center , style: const TextStyle(fontFamily: "sans"),),
                         ],
                       ),
                       Row(

@@ -5,7 +5,7 @@ import 'package:ecommercecourse/data/datasource/remote/orders/details_data.dart'
 import 'package:ecommercecourse/data/model/cartmodel.dart';
 import 'package:ecommercecourse/data/model/ordersmodel.dart';
 import 'package:get/get.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 
 class OrdersDetailsController extends GetxController {
   OrdersDetailsData ordersDetailsData = OrdersDetailsData(Get.find());
@@ -16,11 +16,6 @@ class OrdersDetailsController extends GetxController {
 
   late OrdersModel ordersModel;
 
-  Completer<GoogleMapController>? completercontroller;
-
-  List<Marker> markers = [];
-
-  CameraPosition? cameraPosition;
 
   intialData() {
     // التحقق من أن نوع الطلب هو "0" وأن الإحداثيات غير null أو فارغة
@@ -32,21 +27,12 @@ class OrdersDetailsController extends GetxController {
       try {
         double parsedLat = double.parse(ordersModel.addressLat!);
         double parsedLong = double.parse(ordersModel.addressLong!);
-        cameraPosition = CameraPosition(
-          target: LatLng(parsedLat, parsedLong),
-          zoom: 12.4746,
-        );
-        markers.add(Marker(
-          markerId: MarkerId("1"),
-          position: LatLng(parsedLat, parsedLong),
-        ));
+
+        ;
       } catch (e) {
         // في حال فشل عملية التحويل يتم تسجيل الخطأ وتعيين قيمة افتراضية
         print("Error parsing latitude or longitude: $e");
-        cameraPosition = CameraPosition(
-          target: LatLng(0.0, 0.0),
-          zoom: 12.4746,
-        );
+
       }
     }
   }

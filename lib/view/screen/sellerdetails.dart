@@ -8,7 +8,10 @@ import 'package:ecommercecourse/core/class/handlingdataview.dart';
 import 'package:ecommercecourse/core/constant/color.dart';
 import 'package:ecommercecourse/core/class/crud.dart';
 import 'package:ecommercecourse/linkapi.dart';
-
+import 'package:ecommercecourse/view/widget/home/product_badges.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:visibility_detector/visibility_detector.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 // Model للبائع
 class SellerDetailsModel {
   String? sellerId;
@@ -64,11 +67,11 @@ class SellerDetailsModel {
     sellerId = productData['items_id_seller']?.toString();
     sellerName = productData['seller_name'];
     sellerImage = productData['seller_image'];
+    sellerDescription = productData['seller_description'];
     averageRating = productData['average_rating']?.toString() ?? "0.0";
     totalRatings = productData['total_ratings']?.toString() ?? "0";
     sellerVerified = "1";
     sellerStatus = "1";
-    sellerDescription = "متجر ${sellerName ?? 'غير محدد'}";
   }
 }
 
@@ -227,6 +230,34 @@ class SellerDetailsController extends GetxController {
     hasSellerData = false;
     getSellerProducts();
   }
+
+  // دالة استخراج الصورة الأولى
+  String getFirstImage(String? itemsImage) {
+    if (itemsImage == null || itemsImage.isEmpty) return '';
+
+    try {
+      // محاولة تحليل JSON
+      if (itemsImage.startsWith('{') || itemsImage.startsWith('[')) {
+        final decoded = itemsImage.replaceAll(RegExp(r'[{}"\[\]]'), '');
+        final parts = decoded.split(',');
+        for (String part in parts) {
+          if (part.contains('images:')) {
+            final imagePart = part.split('images:')[1];
+            final images = imagePart.split(',');
+            if (images.isNotEmpty) {
+              return images[0].trim();
+            }
+          }
+        }
+      }
+
+      // إذا لم يكن JSON، إرجاع النص كما هو
+      return itemsImage;
+    } catch (e) {
+      // في حالة الخطأ، إرجاع النص الأصلي
+      return itemsImage;
+    }
+  }
 }
 
 // الصفحة الرئيسية
@@ -281,122 +312,145 @@ class SellerDetailsView extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildSellerCard(SellerDetailsController controller) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // معلومات المتجر الأساسية
-          Row(
-            children: [
-              // صورة المتجر
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!, width: 2),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: _buildSellerImage(controller.sellerDetails?.sellerImage),
-                ),
-              ),
+    // متغير للتحكم في عرض النص
+    bool isExpanded = false;
 
-              const SizedBox(width: 16),
+    return StatefulBuilder(
+        builder: (context, setState) {
+          return Container(
 
-              // اسم المتجر ووصفه
-              Expanded(
-                child: Column(
+            margin: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 15,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                // معلومات المتجر الأساسية
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // اسم المتجر مع التحقق
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            controller.sellerDetails?.sellerName ?? "متجر مجهول",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: AppColor.black,
-                            ),
-                          ),
-                        ),
-                        if (controller.sellerDetails?.sellerVerified == "1") ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.verified,
-                            color: Colors.blue,
-                            size: 18,
-                          ),
-                        ],
-                      ],
+                    // صورة المتجر
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey[200]!, width: 2),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: _buildSellerImage(controller.sellerDetails?.sellerImage),
+                      ),
                     ),
 
-                    const SizedBox(height: 6),
+                    const SizedBox(width: 16),
 
-                    // وصف المتجر
-                    Text(
-                      controller.sellerDetails?.sellerDescription ?? "لا يوجد وصف",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                        height: 1.3,
+                    // اسم المتجر ووصفه
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // اسم المتجر مع التحقق
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  controller.sellerDetails?.sellerName ?? "متجر مجهول",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColor.black,
+                                  ),
+                                ),
+                              ),
+                              if (controller.sellerDetails?.sellerVerified == "1") ...[
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.verified,
+                                  color: Colors.blue,
+                                  size: 18,
+                                ),
+                              ],
+                            ],
+                          ),
+
+                          const SizedBox(height: 6),
+
+                          // وصف المتجر
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                isExpanded = !isExpanded;
+                              });
+                            },
+                            child: Text(
+                              controller.sellerDetails?.sellerDescription ?? "لا يوجد وصف",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                                height: 1.3,
+                              ),
+                              maxLines: isExpanded ? null : 4,
+                              overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
 
-          const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-          // التقييم
-          _buildRatingSection(controller),
+                // التقييم
+                _buildRatingSection(controller),
 
-          const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-          // معلومات إضافية
-          Row(
-            children: [
-              Expanded(
-                child: _buildInfoItem(
-                  Icons.inventory_2_outlined,
-                  "${controller.sellerProducts.length} منتج",
-                  Colors.blue,
+                // معلومات إضافية
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          // إضافة منطق الانتقال إلى صفحة الدردشة
+                          // Navigator.push(context, MaterialPageRoute(builder: (context) => ChatPage(sellerId: controller.sellerDetails?.sellerId)));
+                        },
+                        child: _buildInfoItem(
+                          Icons.chat_bubble_outline,
+                          "مراسلة البائع",
+                          Colors.blue,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildInfoItem(
+                        Icons.store_outlined,
+                        "ID: ${controller.sellerDetails?.sellerId ?? 'غير محدد'}",
+                        Colors.green,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildInfoItem(
-                  Icons.store_outlined,
-                  "ID: ${controller.sellerDetails?.sellerId ?? 'غير محدد'}",
-                  Colors.green,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+
+              ],
+            ),
+          );
+        }
     );
   }
+
 
   Widget _buildRatingSection(SellerDetailsController controller) {
     double rating = double.tryParse(controller.sellerDetails?.averageRating ?? "0") ?? 0;
@@ -406,7 +460,7 @@ class SellerDetailsView extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.amber[50],
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.amber[200]!, width: 1),
       ),
       child: Row(
@@ -422,7 +476,7 @@ class SellerDetailsView extends StatelessWidget {
                     ? Icons.star_half
                     : Icons.star_border,
                 color: Colors.amber[600],
-                size: 20,
+                size: 18,
               );
             }),
           ),
@@ -459,7 +513,7 @@ class SellerDetailsView extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
@@ -469,7 +523,7 @@ class SellerDetailsView extends StatelessWidget {
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: color,
               ),
@@ -490,7 +544,7 @@ class SellerDetailsView extends StatelessWidget {
           Row(
             children: [
               Text(
-                "المنتجات",
+                "منتجات البائع",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -505,20 +559,7 @@ class SellerDetailsView extends StatelessWidget {
           // المنتجات
           controller.sellerProducts.isEmpty
               ? _buildEmptyProducts()
-              : GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.8,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: controller.sellerProducts.length,
-            itemBuilder: (context, index) {
-              return _buildProductCard(controller.sellerProducts[index], controller);
-            },
-          ),
+              : _buildEnhancedItemsList(controller),
 
           const SizedBox(height: 20),
         ],
@@ -554,109 +595,246 @@ class SellerDetailsView extends StatelessWidget {
     );
   }
 
-  Widget _buildProductCard(SellerProductModel product, SellerDetailsController controller) {
-    return GestureDetector(
-      onTap: () => controller.goToProductDetails(product),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // صورة المنتج
-            Expanded(
-              flex: 3,
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                ),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                  child: _buildProductImage(product.itemsImage),
-                ),
-              ),
-            ),
+  Widget _buildEnhancedItemsList(SellerDetailsController controller) {
+    return AnimationLimiter(
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 0),
+        itemCount: (controller.sellerProducts.length / 2).ceil(),
+        cacheExtent: 1500,
+        addAutomaticKeepAlives: true,
+        addRepaintBoundaries: true,
+        itemBuilder: (context, index) {
+          int firstIndex = index * 2;
+          int secondIndex = firstIndex + 1;
 
-            // تفاصيل المنتج
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // اسم المنتج
-                    Text(
-                      product.itemsName ?? "",
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColor.black,
+          return AnimationConfiguration.staggeredList(
+            position: index,
+            duration: const Duration(milliseconds: 375),
+            child: SlideAnimation(
+              verticalOffset: 50.0,
+              child: FadeInAnimation(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildProductCard(
+                          controller.sellerProducts[firstIndex],
+                          controller,
+                          firstIndex,
+                        ),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    // التقييم
-                    Row(
-                      children: [
-                        Icon(Icons.star, color: Colors.amber, size: 12),
-                        const SizedBox(width: 4),
-                        Text(
-                          product.itemsRating ?? "0.0",
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const Spacer(),
-
-                    // السعر
-                    Row(
-                      children: [
-                        if (product.itemsDiscount != "0" && product.itemsDiscount != null)
-                          Text(
-                            "${product.itemsPrice} د.ع",
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.grey[500],
-                              decoration: TextDecoration.lineThrough,
-                            ),
-                          ),
-                        if (product.itemsDiscount != "0" && product.itemsDiscount != null)
-                          const SizedBox(width: 4),
+                      const SizedBox(width: 10),
+                      if (secondIndex < controller.sellerProducts.length)
                         Expanded(
-                          child: Text(
-                            "${product.itemsPriceDiscount ?? product.itemsPrice} د.ع",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: AppColor.primaryColor,
-                            ),
+                          child: _buildProductCard(
+                            controller.sellerProducts[secondIndex],
+                            controller,
+                            secondIndex,
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        )
+                      else
+                        const Expanded(child: SizedBox()),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildProductCard(SellerProductModel product, SellerDetailsController controller, int index) {
+    double discount = double.tryParse(product.itemsDiscount ?? "0") ?? 0;
+    double originalPrice = double.tryParse(product.itemsPrice ?? "0") ?? 0;
+    double deliveryPrice = 0;
+    bool hasDiscount = discount > 0;
+    bool hasFreeDelivery = deliveryPrice == 0;
+
+    // استخراج الصورة الأولى
+    String firstImage = controller.getFirstImage(product.itemsImage);
+
+    return VisibilityDetector(
+      key: Key('seller-product-${product.itemsId}-$index'),
+      onVisibilityChanged: (visibilityInfo) {
+        // يمكن إضافة منطق إضافي هنا عند الحاجة
+      },
+      child: GestureDetector(
+        onTap: () => controller.goToProductDetails(product),
+        child: Container(
+          height: 280,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // صورة المنتج
+                  Expanded(
+                    flex: 3,
+                    child: Container(
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
+                        child: firstImage.isNotEmpty
+                            ? CachedNetworkImage(
+                          imageUrl: "${AppLink.imagestItems}/$firstImage",
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: Colors.grey[200],
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(AppColor.primaryColor),
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.grey[200],
+                            child: const Icon(
+                              Icons.image_not_supported,
+                              color: Colors.grey,
+                              size: 40,
+                            ),
+                          ),
+                          memCacheWidth: 400,
+                          memCacheHeight: 400,
+                          maxWidthDiskCache: 400,
+                          maxHeightDiskCache: 400,
+                          fadeInDuration: const Duration(milliseconds: 300),
+                          fadeOutDuration: const Duration(milliseconds: 300),
+                        )
+                            : Container(
+                          color: Colors.grey[200],
+                          child: const Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey,
+                            size: 40,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // تفاصيل المنتج
+                  Expanded(
+                    flex: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // اسم المنتج
+                          Text(
+                            product.itemsName ?? "",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColor.black,
+                              height: 1.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textDirection: TextDirection.rtl,
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          // عدد القطع المتوفرة
+                          Builder(
+                            builder: (context) {
+                              int itemCount = int.tryParse(product.itemsCount ?? '0') ?? 0;
+                              bool isOutOfStock = itemCount == 0;
+
+                              return Text(
+                                isOutOfStock ? "نفذ المخزون".tr : "متوفر: ".tr + "${product.itemsCount}" + " قطعة".tr,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isOutOfStock ? Colors.red : Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              );
+                            },
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          // الأسعار
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (hasDiscount) ...[
+                                Text(
+                                  "${product.itemsPriceDiscount} " + "د.ع".tr,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColor.primaryColor,
+                                  ),
+                                ),
+                                Text(
+                                  "${product.itemsPrice} " + "د.ع".tr,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey[500],
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
+                                ),
+                              ] else ...[
+                                Text(
+                                  "${product.itemsPrice} " + "د.ع".tr,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColor.primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              // الشارات
+              Positioned(
+                top: 6,
+                right: 6,
+                child: ProductBadges.buildBadgesColumn(
+                  hasDiscount: hasDiscount,
+                  discount: discount,
+                  hasFreeDelivery: hasFreeDelivery,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

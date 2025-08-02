@@ -33,8 +33,14 @@ class ItemsView extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 10),
               child: ListView.builder(
-                itemCount: controller.data.length,
+                controller: controller.scrollController,
+                itemCount: controller.data.length + 1,
                 itemBuilder: (context, index) {
+                  // عنصر التحميل الإضافي
+                  if (index == controller.data.length) {
+                    return _buildLoader(controller);
+                  }
+
                   // الحصول على الصورة الأولى للعرض
                   String firstImage = controller.data[index].getFirstImage();
 
@@ -56,7 +62,7 @@ class ItemsView extends StatelessWidget {
                                 placeholder: (context, url) => CircularProgressIndicator(),
                                 errorWidget: (context, url, error) => Icon(Icons.error),
                               )
-                                  : Container(
+                                  : SizedBox(
                                 height: 80,
                                 child: Icon(Icons.image_not_supported),
                               ),
@@ -94,5 +100,35 @@ class ItemsView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildLoader(ItemsControllerSeller controller) {
+    if (controller.isLoadingMore) {
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    } else if (controller.hasMore) {
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+          child: ElevatedButton(
+            onPressed: () {
+              controller.loadMore();
+            },
+            child: Text('تحميل المزيد'),
+          ),
+        ),
+      );
+    } else {
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+          child: Text('لا يوجد المزيد من المنتجات'),
+        ),
+      );
+    }
   }
 }

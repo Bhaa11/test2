@@ -17,30 +17,30 @@ class CartController extends GetxController {
   CartData cartData = CartData(Get.find());
   MyServices myServices = Get.find();
 
-  // متغيرات السلة
+// متغيرات السلة
   List<CartModel> data = [];
   double priceorders = 0.0;
   int totalcountitems = 0;
   int pricedelivery = 0;
 
-  // متغيرات العنوان
+// متغيرات العنوان
   List<AddressModel> addresses = [];
   String selectedAddressId = "";
 
-  // حالة الطلب
+// حالة الطلب
   late StatusRequest statusRequest;
 
-  // دالة لاستخراج الصورة الأولى من JSON
+// دالة لاستخراج الصورة الأولى من JSON
   String getFirstImage(String? itemsImage) {
     if (itemsImage == null || itemsImage.isEmpty) {
       return '';
     }
 
     try {
-      // محاولة تحليل JSON
+// محاولة تحليل JSON
       Map<String, dynamic> imageData = json.decode(itemsImage);
 
-      // التحقق من وجود مصفوفة الصور
+// التحقق من وجود مصفوفة الصور
       if (imageData.containsKey('images') && imageData['images'] is List) {
         List images = imageData['images'];
         if (images.isNotEmpty) {
@@ -48,15 +48,15 @@ class CartController extends GetxController {
         }
       }
 
-      // إذا لم توجد صور، إرجاع فارغ
+// إذا لم توجد صور، إرجاع فارغ
       return '';
     } catch (e) {
-      // في حالة فشل تحليل JSON، قد تكون الصورة بالتنسيق القديم
+// في حالة فشل تحليل JSON، قد تكون الصورة بالتنسيق القديم
       return itemsImage;
     }
   }
 
-  // دالة عرض السلة
+// دالة عرض السلة
   view() async {
     statusRequest = StatusRequest.loading;
     update();
@@ -75,7 +75,7 @@ class CartController extends GetxController {
               int.parse(dataresponsecountprice['totalcount'].toString());
           priceorders =
               double.parse(dataresponsecountprice['totalprice'].toString());
-          // إصلاح استخراج رسوم التوصيل: استخراج القيمة من أول عنصر في قائمة البيانات إن وجد
+// إصلاح استخراج رسوم التوصيل: استخراج القيمة من أول عنصر في قائمة البيانات إن وجد
           if (dataresponse.isNotEmpty &&
               dataresponse[0]['items_pricedelivery'] != null) {
             pricedelivery =
@@ -93,7 +93,7 @@ class CartController extends GetxController {
     update();
   }
 
-  // دالة لإضافة عنصر إلى السلة
+// دالة لإضافة عنصر إلى السلة
   add(String itemsid) async {
     statusRequest = StatusRequest.loading;
     update();
@@ -103,9 +103,16 @@ class CartController extends GetxController {
     statusRequest = handlingData(response);
     if (StatusRequest.success == statusRequest) {
       if (response['status'] == "success") {
-        Get.rawSnackbar(
-          title: "اشعار",
-          messageText: Text("تم اضافة المنتج الى السلة "),
+        Get.snackbar(
+          "✓ تمت الإضافة",
+          "تم اضافة المنتج الى السلة",
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.green.withOpacity(0.9),
+          colorText: Colors.white,
+          borderRadius: 8,
+          margin: EdgeInsets.all(16),
+          duration: Duration(seconds: 2),
+          isDismissible: true,
         );
       } else {
         statusRequest = StatusRequest.failure;
@@ -114,7 +121,7 @@ class CartController extends GetxController {
     update();
   }
 
-  // دالة لحذف عنصر من السلة
+// دالة لحذف عنصر من السلة
   delete(String itemsid) async {
     statusRequest = StatusRequest.loading;
     update();
@@ -124,9 +131,16 @@ class CartController extends GetxController {
     statusRequest = handlingData(response);
     if (StatusRequest.success == statusRequest) {
       if (response['status'] == "success") {
-        Get.rawSnackbar(
-          title: "اشعار",
-          messageText: Text("تم ازالة المنتج من السلة "),
+        Get.snackbar(
+          "✓ تمت الإزالة",
+          "تم ازالة المنتج من السلة",
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.orange.withOpacity(0.9),
+          colorText: Colors.white,
+          borderRadius: 8,
+          margin: EdgeInsets.all(16),
+          duration: Duration(seconds: 2),
+          isDismissible: true,
         );
       } else {
         statusRequest = StatusRequest.failure;
@@ -135,12 +149,12 @@ class CartController extends GetxController {
     update();
   }
 
-  // حساب الإجمالي (المجموع الفرعي + رسوم التوصيل)
+// حساب الإجمالي (المجموع الفرعي + رسوم التوصيل)
   double getTotalPrice() {
     return (priceorders + pricedelivery);
   }
 
-  // دالة استرجاع عناوين الشحن للمستخدم
+// دالة استرجاع عناوين الشحن للمستخدم
   getShippingAddresses() async {
     AddressData addressData = AddressData(Get.find());
     statusRequest = StatusRequest.loading;
@@ -161,12 +175,22 @@ class CartController extends GetxController {
     update();
   }
 
-  // دالة تأكيد الطلب مباشرة من صفحة السلة
+// دالة تأكيد الطلب مباشرة من صفحة السلة
   confirmOrder() async {
     if (selectedAddressId.isEmpty) {
-      return Get.snackbar("خطأ", "الرجاء اختيار عنوان التوصيل");
+      return Get.snackbar(
+        "⚠ خطأ",
+        "الرجاء اختيار عنوان التوصيل",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red.withOpacity(0.9),
+        colorText: Colors.white,
+        borderRadius: 8,
+        margin: EdgeInsets.all(16),
+        duration: Duration(seconds: 2),
+        isDismissible: true,
+      );
     }
-    // إعداد بيانات الطلب بناءً على المتطلبات في الباك اند
+// إعداد بيانات الطلب بناءً على المتطلبات في الباك اند
     Map orderData = {
       "usersid": myServices.sharedPreferences.getString("id"),
       "addressid": selectedAddressId,
@@ -187,25 +211,45 @@ class CartController extends GetxController {
     statusRequest = handlingData(response);
     if (StatusRequest.success == statusRequest) {
       if (response['status'] == "success") {
-        // إعادة تعيين بيانات السلة بعد تأكيد الطلب
+// إعادة تعيين بيانات السلة بعد تأكيد الطلب
         resetVarCart();
         Get.offAllNamed(AppRoute.homepage);
-        Get.snackbar("Success", "تم تأكيد الطلب بنجاح");
+        Get.snackbar(
+          "✓ تم التأكيد",
+          "تم تأكيد الطلب بنجاح",
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.green.withOpacity(0.9),
+          colorText: Colors.white,
+          borderRadius: 8,
+          margin: EdgeInsets.all(16),
+          duration: Duration(seconds: 3),
+          isDismissible: true,
+        );
       } else {
         statusRequest = StatusRequest.none;
-        Get.snackbar("Error", "حدث خطأ، حاول مرة أخرى");
+        Get.snackbar(
+          "⚠ خطأ",
+          "حدث خطأ، حاول مرة أخرى",
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.red.withOpacity(0.9),
+          colorText: Colors.white,
+          borderRadius: 8,
+          margin: EdgeInsets.all(16),
+          duration: Duration(seconds: 2),
+          isDismissible: true,
+        );
       }
     }
     update();
   }
 
-  // إعادة تحميل بيانات السلة
+// إعادة تحميل بيانات السلة
   refreshPage() {
     resetVarCart();
     view();
   }
 
-  // إعادة تعيين بيانات السلة
+// إعادة تعيين بيانات السلة
   resetVarCart() {
     totalcountitems = 0;
     pricedelivery = 0;
@@ -220,8 +264,14 @@ class CartController extends GetxController {
     view();
   }
 
-  // الانتقال إلى صفحة تفاصيل المنتج
-  goToPageProductDetails(dynamic itemsModel) {
-    Get.toNamed("productdetails", arguments: {"itemsmodel": itemsModel});
+// الانتقال إلى صفحة تفاصيل المنتج
+  goToPageProductDetails(CartModel cartModel) {
+// تحويل CartModel إلى ItemsModel قبل التمرير
+    ItemsModel itemsModel = cartModel.toItemsModel();
+// تمرير معلومة أن المستخدم جاء من السلة
+    Get.toNamed("productdetails", arguments: {
+      "itemsmodel": itemsModel,
+      "fromCart": true
+    });
   }
 }

@@ -1,7 +1,7 @@
 import 'package:ecommercecourse/controller/notification_controller.dart';
 import 'package:ecommercecourse/core/class/handlingdataview.dart';
 import 'package:ecommercecourse/core/constant/color.dart';
-import 'package:ecommercecourse/core/constant/routes.dart'; // استيراد ملف الطرق
+import 'package:ecommercecourse/core/constant/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jiffy/jiffy.dart';
@@ -14,10 +14,9 @@ class NotificationView extends StatelessWidget {
   Widget build(BuildContext context) {
     Get.put(NotificationController());
 
-    // معالجة زر الرجوع للعودة إلى الصفحة الرئيسية بدلا من الخروج
     return WillPopScope(
       onWillPop: () async {
-        Get.offAllNamed(AppRoute.homepage); // العودة للصفحة الرئيسية
+        Get.offAllNamed(AppRoute.homepage);
         return false;
       },
       child: Scaffold(
@@ -37,12 +36,10 @@ class NotificationView extends StatelessWidget {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios, color: AppColor.grey2),
             onPressed: () {
-              // العودة للصفحة الرئيسية بدلا من الخروج
               Get.offAllNamed(AppRoute.homepage);
             },
           ),
           actions: [
-            // زر لتحديث الإشعارات
             IconButton(
               icon: const Icon(Icons.refresh_rounded, color: AppColor.secondColor),
               onPressed: () {
@@ -63,11 +60,11 @@ class NotificationView extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  // عنوان القسم مع عدد الإشعارات - تم إزالة زر مسح الكل
+                  // عنوان القسم مع عدد الإشعارات
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start, // تغيير التوزيع ليكون في البداية بعد إزالة الزر
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           controller.data.isNotEmpty
@@ -79,10 +76,27 @@ class NotificationView extends StatelessWidget {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
+                        // عرض عدد الإشعارات غير المقروءة
+                        if (controller.getUnreadCount() > 0)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.red.shade200),
+                            ),
+                            child: Text(
+                              "${controller.getUnreadCount()} جديد",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.red.shade700,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
-                  // خط فاصل بين العنوان وقائمة الإشعارات
                   const Divider(height: 1, thickness: 0.5, color: Color(0xFFEEEEEE)),
 
                   if (controller.data.isNotEmpty)
@@ -93,7 +107,7 @@ class NotificationView extends StatelessWidget {
                         itemCount: controller.data.length,
                         itemBuilder: (context, index) {
                           final item = controller.data[index];
-                          final bool isUnread = index < 3; // مثال: الثلاثة الأولى غير مقروءة
+                          final bool isUnread = !controller.isNotificationRead(item);
 
                           return Dismissible(
                             key: UniqueKey(),
@@ -109,20 +123,31 @@ class NotificationView extends StatelessWidget {
                               ),
                             ),
                             onDismissed: (direction) {
-                              // يمكن استدعاء دالة لحذف الإشعار
-                              // controller.deleteNotification(item['notification_id']);
+                              // يمكن إضافة وظيفة الحذف هنا
                             },
                             child: Card(
-                              elevation: 0,
+                              elevation: isUnread ? 2 : 0,
                               margin: const EdgeInsets.symmetric(vertical: 6),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                side: BorderSide(color: Colors.grey.shade200, width: 1),
+                                side: BorderSide(
+                                    color: isUnread
+                                        ? AppColor.primaryColor.withOpacity(0.3)
+                                        : Colors.grey.shade200,
+                                    width: isUnread ? 1.5 : 1
+                                ),
                               ),
+                              // تمييز الإشعارات غير المقروءة بلون خلفية مختلف
+                              color: isUnread
+                                  ? AppColor.thirdColor.withOpacity(0.05)
+                                  : Colors.white,
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(16),
                                 onTap: () {
-                                  // يمكن إضافة تفاعل عند الضغط على الإشعار
+                                  // تحديد الإشعار كمقروء عند النقر عليه
+                                  if (isUnread) {
+                                    controller.markSingleAsRead(item['notification_id'].toString());
+                                  }
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.all(14),
@@ -137,14 +162,20 @@ class NotificationView extends StatelessWidget {
                                             padding: const EdgeInsets.all(10),
                                             decoration: BoxDecoration(
                                               color: isUnread
-                                                  ? AppColor.thirdColor
+                                                  ? AppColor.primaryColor.withOpacity(0.1)
                                                   : const Color(0xFFEEEEEE),
                                               shape: BoxShape.circle,
+                                              border: isUnread
+                                                  ? Border.all(
+                                                  color: AppColor.primaryColor.withOpacity(0.3),
+                                                  width: 1.5
+                                              )
+                                                  : null,
                                             ),
                                             child: Icon(
                                               Icons.notifications_outlined,
                                               color: isUnread
-                                                  ? AppColor.secondColor
+                                                  ? AppColor.primaryColor
                                                   : AppColor.grey,
                                               size: 24,
                                             ),
@@ -154,11 +185,15 @@ class NotificationView extends StatelessWidget {
                                               right: 0,
                                               top: 0,
                                               child: Container(
-                                                width: 10,
-                                                height: 10,
-                                                decoration: const BoxDecoration(
-                                                  color: Colors.redAccent,
+                                                width: 12,
+                                                height: 12,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red,
                                                   shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                      color: Colors.white,
+                                                      width: 2
+                                                  ),
                                                 ),
                                               ),
                                             ),
@@ -182,18 +217,43 @@ class NotificationView extends StatelessWidget {
                                                           ? FontWeight.bold
                                                           : FontWeight.w500,
                                                       fontSize: 16,
-                                                      color: AppColor.black,
+                                                      color: isUnread
+                                                          ? AppColor.black
+                                                          : AppColor.grey2,
                                                     ),
                                                   ),
                                                 ),
+                                                // مؤشر "جديد" للإشعارات غير المقروءة
+                                                if (isUnread)
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 2
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.red,
+                                                      borderRadius: BorderRadius.circular(8),
+                                                    ),
+                                                    child: const Text(
+                                                      'جديد',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 10,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                const SizedBox(width: 8),
                                                 Text(
                                                   Jiffy.parse(
                                                     item['notification_datetime'],
                                                     pattern: "yyyy-MM-dd",
                                                   ).fromNow(),
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 12,
-                                                    color: AppColor.grey,
+                                                    color: isUnread
+                                                        ? AppColor.grey
+                                                        : AppColor.grey.withOpacity(0.7),
                                                   ),
                                                 ),
                                               ],
@@ -201,10 +261,15 @@ class NotificationView extends StatelessWidget {
                                             const SizedBox(height: 8),
                                             Text(
                                               item['notification_body'],
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 14,
                                                 height: 1.4,
-                                                color: AppColor.grey,
+                                                color: isUnread
+                                                    ? AppColor.grey
+                                                    : AppColor.grey.withOpacity(0.8),
+                                                fontWeight: isUnread
+                                                    ? FontWeight.w500
+                                                    : FontWeight.w400,
                                               ),
                                             ),
                                             const SizedBox(height: 5),
@@ -227,14 +292,11 @@ class NotificationView extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // استخدام Lottie للرسوم المتحركة
-                            // يمكنك استبدالها بصورة Icon إذا لم تكن مستخدمًا Lottie
                             SizedBox(
                               height: 180,
                               width: 180,
                               child: Lottie.asset(
                                 'assets/animations/empty-notifications.json',
-                                // في حالة عدم وجود ملف Lottie، استخدم الآيكون بدلاً منه
                                 errorBuilder: (context, error, stackTrace) => Icon(
                                   Icons.notifications_off_outlined,
                                   size: 80,
@@ -260,7 +322,6 @@ class NotificationView extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 24),
-                            // زر التحديث
                             ElevatedButton.icon(
                               onPressed: () {
                                 controller.getData();

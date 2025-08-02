@@ -1,19 +1,20 @@
-// lib/controller/profile_controller.dart
 import 'dart:io';
 import 'package:ecommercecourse/core/class/statusrequest.dart';
 import 'package:ecommercecourse/core/functions/handingdatacontroller.dart';
 import 'package:ecommercecourse/core/services/services.dart';
 import 'package:ecommercecourse/data/datasource/remote/profile_data.dart';
 import 'package:ecommercecourse/data/model/user_model.dart';
-import 'package:ecommercecourse/core/constant/color.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:ecommercecourse/main.dart';
 
 class ProfileController extends GetxController {
   // Dependencies
   late ProfileData profileData;
   late MyServices myServices;
+  final AuthController authController = Get.find<AuthController>();
+  late GuestController guestController;
 
   // Status
   StatusRequest statusRequest = StatusRequest.none;
@@ -37,6 +38,7 @@ class ProfileController extends GetxController {
     // Initialize dependencies
     profileData = ProfileData(Get.find());
     myServices = Get.find();
+    guestController = Get.put(GuestController());
 
     // Initialize controllers
     nameController = TextEditingController();
@@ -45,6 +47,19 @@ class ProfileController extends GetxController {
 
     // Load user profile
     getUserProfile();
+
+    // استمع لتغييرات حالة المصادقة
+    ever(authController.authStateChanges, (bool isLoggedIn) {
+      print("Authentication state changed: $isLoggedIn");
+      if (isLoggedIn) {
+        print("User logged in, refreshing profile...");
+        getUserProfile();
+      } else {
+        print("User logged out, clearing profile data...");
+        _clearProfileData();
+      }
+    });
+
     super.onInit();
   }
 
@@ -56,19 +71,48 @@ class ProfileController extends GetxController {
     super.onClose();
   }
 
+  /// مسح بيانات الملف الشخصي عند تسجيل الخروج
+  void _clearProfileData() {
+    currentUser = null;
+    selectedImage = null;
+    currentImageUrl = null;
+    nameController.clear();
+    descriptionController.clear();
+    phoneController.clear();
+    statusRequest = StatusRequest.none;
+    updateStatusRequest = StatusRequest.none;
+    update();
+    print("Profile data cleared");
+  }
+
   /// جلب معلومات المستخدم
   Future<void> getUserProfile() async {
     try {
       statusRequest = StatusRequest.loading;
       update();
 
-      String? userId = myServices.sharedPreferences.getString("id");
-      if (userId == null) {
-        statusRequest = StatusRequest.failure;
-        update();
-        Get.snackbar("خطأ", "لم يتم العثور على معرف المستخدم");
+      // التحقق من حالة المصادقة أولاً
+      if (!authController.isAuthenticated) {
+        print("User not authenticated, loading guest data");
+        _loadGuestData();
         return;
       }
+
+      // الحصول على معرف المستخدم من AuthController بدلاً من SharedPreferences
+      String? userId = authController.currentUser?['users_id']?.toString();
+
+      if (userId == null || userId.isEmpty) {
+        print("No user ID found in AuthController, checking SharedPreferences");
+        userId = myServices.sharedPreferences.getString("id");
+      }
+
+      if (userId == null || userId.isEmpty) {
+        print("No user ID found, treating as guest");
+        _loadGuestData();
+        return;
+      }
+
+      print("Loading profile for user ID: $userId");
 
       var response = await profileData.getUserProfile(userId);
       statusRequest = handlingData(response);
@@ -78,6 +122,7 @@ class ProfileController extends GetxController {
           currentUser = UserModel.fromJson(response['data']);
           _fillFormWithUserData();
           _updateSharedPreferences();
+          print("Profile loaded successfully for: ${currentUser?.usersName}");
         } else {
           statusRequest = StatusRequest.failure;
           Get.snackbar("خطأ", response['message'] ?? "فشل في جلب البيانات");
@@ -87,6 +132,37 @@ class ProfileController extends GetxController {
       statusRequest = StatusRequest.serverfailure;
       Get.snackbar("خطأ", "حدث خطأ في الاتصال بالخادم");
       print("Error in getUserProfile: $e");
+    }
+    update();
+  }
+
+  /// تحميل بيانات المستخدم الزائر
+  void _loadGuestData() {
+    try {
+      Map<String, dynamic>? guestData = guestController.currentUser;
+
+      if (guestData != null) {
+        // إنشاء UserModel من بيانات الزائر
+        currentUser = UserModel(
+          usersId: guestData['users_id']?.toString(),
+          usersName: guestData['users_name'] ?? 'زائر',
+          usersEmail: guestData['users_email'] ?? '',
+          usersPhone: guestData['users_phone'] ?? '',
+          usersDescription: 'مستخدم زائر',
+          usersImage: null,
+          usersCreatedate: guestData['users_create'] ?? DateTime.now().toIso8601String(),
+        );
+
+        _fillFormWithUserData();
+        statusRequest = StatusRequest.success;
+        print("Guest data loaded: ${currentUser?.usersName}");
+      } else {
+        statusRequest = StatusRequest.failure;
+        print("No guest data available");
+      }
+    } catch (e) {
+      statusRequest = StatusRequest.failure;
+      print("Error loading guest data: $e");
     }
     update();
   }
@@ -103,14 +179,22 @@ class ProfileController extends GetxController {
 
   /// تحديث البيانات في SharedPreferences
   void _updateSharedPreferences() {
-    if (currentUser != null) {
-      myServices.sharedPreferences.setString("username", currentUser!.usersName ?? "");
-      myServices.sharedPreferences.setString("phone", currentUser!.usersPhone ?? "");
+    if (currentUser != null && authController.isAuthenticated) {
+      myServices.sharedPreferences
+          .setString("username", currentUser!.usersName ?? "");
+      myServices.sharedPreferences
+          .setString("phone", currentUser!.usersPhone ?? "");
     }
   }
 
   /// اختيار صورة من المعرض
   Future<void> chooseImageFromGallery() async {
+    // التحقق من أن المستخدم مسجل دخول
+    if (!authController.isAuthenticated) {
+      Get.snackbar("تنبيه", "يجب تسجيل الدخول لتحديث الصورة");
+      return;
+    }
+
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -131,6 +215,12 @@ class ProfileController extends GetxController {
 
   /// اختيار صورة من الكاميرا
   Future<void> chooseImageFromCamera() async {
+    // التحقق من أن المستخدم مسجل دخول
+    if (!authController.isAuthenticated) {
+      Get.snackbar("تنبيه", "يجب تسجيل الدخول لتحديث الصورة");
+      return;
+    }
+
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.camera,
@@ -151,6 +241,12 @@ class ProfileController extends GetxController {
 
   /// إظهار خيارات اختيار الصورة
   void showImagePickerOptions() {
+    // التحقق من أن المستخدم مسجل دخول
+    if (!authController.isAuthenticated) {
+      Get.snackbar("تنبيه", "يجب تسجيل الدخول لتحديث الصورة");
+      return;
+    }
+
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(20),
@@ -245,13 +341,19 @@ class ProfileController extends GetxController {
 
   /// تحديث الملف الشخصي
   Future<void> updateProfile() async {
+    // التحقق من أن المستخدم مسجل دخول
+    if (!authController.isAuthenticated) {
+      Get.snackbar("تنبيه", "يجب تسجيل الدخول لتحديث الملف الشخصي");
+      return;
+    }
+
     if (!_validateForm()) return;
 
     try {
       updateStatusRequest = StatusRequest.loading;
       update();
 
-      String? userId = myServices.sharedPreferences.getString("id");
+      String? userId = authController.currentUser?['users_id']?.toString();
       if (userId == null) {
         updateStatusRequest = StatusRequest.failure;
         update();
@@ -272,7 +374,33 @@ class ProfileController extends GetxController {
 
       if (updateStatusRequest == StatusRequest.success) {
         if (response['status'] == "success") {
-          _handleUpdateSuccess();
+          // تحديث البيانات في AuthController
+          Map<String, dynamic> updatedUserData = Map<String, dynamic>.from(authController.currentUser ?? {});
+          updatedUserData['users_name'] = nameController.text.trim();
+          updatedUserData['users_phone'] = phoneController.text.trim();
+          authController.setCurrentUser(updatedUserData);
+
+          // تحديث البيانات المحلية
+          _updateSharedPreferences();
+
+          // إعادة تعيين الصورة المختارة
+          selectedImage = null;
+
+          // إظهار رسالة نجاح
+          Get.snackbar(
+            "نجح",
+            "تم تحديث الملف الشخصي بنجاح",
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 3),
+          );
+
+          // إعادة جلب البيانات المحدثة
+          await getUserProfile();
+
+          // إغلاق الـ dialog
+          Get.back();
+
         } else {
           updateStatusRequest = StatusRequest.failure;
           Get.snackbar("خطأ", response['message'] ?? "فشل في تحديث الملف الشخصي");
@@ -286,30 +414,6 @@ class ProfileController extends GetxController {
       print("Error in updateProfile: $e");
     }
     update();
-  }
-
-  /// التعامل مع نجاح التحديث
-  void _handleUpdateSuccess() {
-    // تحديث البيانات المحلية
-    _updateSharedPreferences();
-
-    // إعادة تعيين الصورة المختارة
-    selectedImage = null;
-
-    // إظهار رسالة نجاح
-    Get.snackbar(
-      "نجح",
-      "تم تحديث الملف الشخصي بنجاح",
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 3),
-    );
-
-    // إعادة جلب البيانات المحدثة
-    getUserProfile();
-
-    // إغلاق الـ dialog
-    Get.back();
   }
 
   /// التحقق من صحة النموذج
@@ -345,6 +449,12 @@ class ProfileController extends GetxController {
 
   /// تحديث الصورة فقط
   Future<void> updateImageOnly() async {
+    // التحقق من أن المستخدم مسجل دخول
+    if (!authController.isAuthenticated) {
+      Get.snackbar("تنبيه", "يجب تسجيل الدخول لتحديث الصورة");
+      return;
+    }
+
     if (selectedImage == null) {
       Get.snackbar("خطأ", "يرجى اختيار صورة أولاً");
       return;
@@ -354,7 +464,7 @@ class ProfileController extends GetxController {
       updateStatusRequest = StatusRequest.loading;
       update();
 
-      String? userId = myServices.sharedPreferences.getString("id");
+      String? userId = authController.currentUser?['users_id']?.toString();
       if (userId == null) {
         updateStatusRequest = StatusRequest.failure;
         update();
@@ -402,7 +512,8 @@ class ProfileController extends GetxController {
     if (currentUser == null) return false;
 
     return nameController.text.trim() != (currentUser?.usersName ?? "") ||
-        descriptionController.text.trim() != (currentUser?.usersDescription ?? "") ||
+        descriptionController.text.trim() !=
+            (currentUser?.usersDescription ?? "") ||
         phoneController.text.trim() != (currentUser?.usersPhone ?? "") ||
         selectedImage != null;
   }
@@ -413,4 +524,10 @@ class ProfileController extends GetxController {
     selectedImage = null;
     update();
   }
+
+  /// التحقق من نوع المستخدم
+  bool get isGuestUser => !authController.isAuthenticated;
+
+  /// الحصول على نوع المستخدم كنص
+  String get userTypeText => authController.isAuthenticated ? 'مستخدم مسجل' : 'مستخدم زائر';
 }

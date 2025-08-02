@@ -7,12 +7,11 @@ class CustomButtonAppBar extends StatelessWidget {
   final IconData icondata;
   final bool? active   ;
   const CustomButtonAppBar(
-      {Key? key,
+      {super.key,
         required this.textbutton,
         required this.icondata,
         required this.onPressed,
-        required this.active})
-      : super(key: key);
+        required this.active});
 
   @override
   Widget build(BuildContext context) {

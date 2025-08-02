@@ -15,11 +15,13 @@ class ItemsModel {
   String? itemsCat;
   String? categoriesId;
   String? categoriesName;
-  String? categoriesNamaAr;
+  String? categoriesNamaAr; // الاسم الأصلي محفوظ للتوافق
+  String? categoriesNameAr; // الاسم الجديد المطلوب
   String? categoriesImage;
   String? categoriesDatetime;
   String? favorite;
   String? itemsPriceDiscount; // السعر النهائي بعد الخصم من قاعدة البيانات
+  String? itemspricediscount; // إضافة للتوافق مع CartModel
   String? itemsIdSeller;
   String? itemsPricedelivery;
   String? itemsCarVariants;
@@ -29,6 +31,10 @@ class ItemsModel {
   String? sellerImage;
   String? totalRatings;
   String? averageRating;
+  // إضافة الحقول الجديدة من الباك إند المحسن
+  double? finalRelevanceScore;
+  double? exactMatchScore;
+  double? qualityScore;
 
   ItemsModel({
     this.itemsId,
@@ -47,6 +53,7 @@ class ItemsModel {
     this.categoriesId,
     this.categoriesName,
     this.categoriesNamaAr,
+    this.categoriesNameAr,
     this.categoriesImage,
     this.categoriesDatetime,
     this.favorite,
@@ -59,6 +66,10 @@ class ItemsModel {
     this.sellerImage,
     this.totalRatings,
     this.averageRating,
+    this.itemspricediscount,
+    this.finalRelevanceScore,
+    this.exactMatchScore,
+    this.qualityScore,
   });
 
   ItemsModel.fromJson(Map<String, dynamic> json) {
@@ -74,11 +85,16 @@ class ItemsModel {
     itemsDiscount = json['items_discount']?.toString();
     itemsDate = json['items_date'];
     itemsCat = json['items_cat']?.toString();
-    // استخدام السعر المحسوب من قاعدة البيانات
-    itemsPriceDiscount = json['itemspricediscount']?.toString();
+
+    // استخدام السعر المحسوب من قاعدة البيانات - تصحيح التعيين
+    String? priceDiscountValue = json['itemspricediscount']?.toString();
+    itemsPriceDiscount = priceDiscountValue;
+    itemspricediscount = priceDiscountValue; // نفس القيمة للتوافق
+
     categoriesId = json['categories_id']?.toString();
     categoriesName = json['categories_name'];
-    categoriesNamaAr = json['categories_nama_ar'];
+    categoriesNamaAr = json['categories_nama_ar']; // الاسم الأصلي
+    categoriesNameAr = json['categories_name_ar'] ?? json['categories_nama_ar']; // الاسم الجديد مع fallback
     categoriesImage = json['categories_image'];
     categoriesDatetime = json['categories_datetime'];
     favorite = json['favorite']?.toString();
@@ -92,36 +108,62 @@ class ItemsModel {
     totalRatings = json['total_ratings']?.toString();
     averageRating = json['average_rating']?.toString();
 
+    // إضافة الحقول الجديدة من الباك إند المحسن
+    finalRelevanceScore = json['final_relevance_score']?.toDouble();
+    exactMatchScore = json['exact_match_score']?.toDouble();
+    qualityScore = json['quality_score']?.toDouble();
+
     print("=== بيانات المنتج من قاعدة البيانات ===");
     print("items_id: $itemsId");
     print("items_name: $itemsName");
     print("items_price (السعر الأصلي): $itemsPrice");
     print("items_discount (نسبة الخصم): $itemsDiscount");
     print("itemspricediscount (السعر النهائي): $itemsPriceDiscount");
+    print("final_relevance_score: $finalRelevanceScore");
   }
 
   // دالة للتحقق من وجود خصم
   bool hasDiscount() {
-    if (itemsDiscount == null || itemsPrice == null || itemsPriceDiscount == null) {
+    if (itemsDiscount == null || itemsPrice == null) {
       return false;
     }
-
     try {
-      double originalPrice = double.parse(itemsPrice!);
-      double finalPrice = double.parse(itemsPriceDiscount!);
-      return finalPrice < originalPrice;
+      double discount = double.parse(itemsDiscount!);
+      return discount > 0;
     } catch (e) {
       return false;
     }
   }
 
+  // دالة للحصول على السعر النهائي بعد الخصم
+  String getFinalPrice() {
+    // إذا كان السعر النهائي موجود من قاعدة البيانات، استخدمه
+    if (itemsPriceDiscount != null && itemsPriceDiscount != "0") {
+      return itemsPriceDiscount!;
+    }
+
+    // وإلا احسب السعر بناءً على السعر الأصلي والخصم
+    if (itemsPrice != null && itemsDiscount != null) {
+      try {
+        double originalPrice = double.parse(itemsPrice!);
+        double discountPercent = double.parse(itemsDiscount!);
+        if (discountPercent > 0) {
+          double finalPrice = originalPrice - (originalPrice * discountPercent / 100);
+          return finalPrice.toStringAsFixed(2);
+        }
+      } catch (e) {
+        print("خطأ في حساب السعر النهائي: $e");
+      }
+    }
+    return itemsPrice ?? "0";
+  }
+
   // دالة للحصول على مقدار الوفر
   String getSavingAmount() {
     if (!hasDiscount()) return "0";
-
     try {
       double originalPrice = double.parse(itemsPrice!);
-      double finalPrice = double.parse(itemsPriceDiscount!);
+      double finalPrice = double.parse(getFinalPrice());
       double saving = originalPrice - finalPrice;
       return saving.toStringAsFixed(2);
     } catch (e) {
@@ -132,7 +174,6 @@ class ItemsModel {
   // دالة للحصول على قائمة الصور
   List<String> getImagesList() {
     if (itemsImage == null || itemsImage == "empty") return [];
-
     try {
       Map<String, dynamic> filesData = jsonDecode(itemsImage!);
       if (filesData['images'] != null) {
@@ -148,7 +189,6 @@ class ItemsModel {
   // دالة للحصول على قائمة الفيديوهات
   List<String> getVideosList() {
     if (itemsImage == null || itemsImage == "empty") return [];
-
     try {
       Map<String, dynamic> filesData = jsonDecode(itemsImage!);
       if (filesData['videos'] != null) {
@@ -195,6 +235,7 @@ class ItemsModel {
     data['categories_id'] = categoriesId;
     data['categories_name'] = categoriesName;
     data['categories_nama_ar'] = categoriesNamaAr;
+    data['categories_name_ar'] = categoriesNameAr;
     data['categories_image'] = categoriesImage;
     data['categories_datetime'] = categoriesDatetime;
     data['favorite'] = favorite;
@@ -207,6 +248,9 @@ class ItemsModel {
     data['seller_image'] = sellerImage;
     data['total_ratings'] = totalRatings;
     data['average_rating'] = averageRating;
+    data['final_relevance_score'] = finalRelevanceScore;
+    data['exact_match_score'] = exactMatchScore;
+    data['quality_score'] = qualityScore;
     return data;
   }
 }

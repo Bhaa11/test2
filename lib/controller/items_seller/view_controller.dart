@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import '../../../../core/class/statusrequest.dart';
 import '../../../../core/functions/handingdatacontroller.dart';
@@ -12,43 +13,93 @@ class ItemsControllerSeller extends GetxController {
 
   List<ItemsModel> data = [];
   late StatusRequest statusRequest;
+  ScrollController scrollController = ScrollController();
+  int lastItemId = 0;
+  bool hasMore = true;
+  bool isLoadingMore = false;
 
   @override
   void onInit() {
-    getData();
     super.onInit();
+    getData();
+
+    // إضافة مستمع لحدث التمرير
+    scrollController.addListener(_scrollListener);
+  }
+
+  @override
+  void onClose() {
+    scrollController.dispose();
+    super.onClose();
+  }
+
+  void _scrollListener() {
+    if (scrollController.position.pixels >=
+        scrollController.position.maxScrollExtent - 200) {
+      loadMore();
+    }
   }
 
   getData() async {
     data.clear();
     statusRequest = StatusRequest.loading;
+    lastItemId = 0;
+    hasMore = true;
+    isLoadingMore = false;
     update();
 
-    String sellerId = myServices.sharedPreferences.getString("id")!;
+    await _fetchItems();
+  }
 
-    var response = await itemsDataSeller.get(sellerId);
-    print("=============================== Controller $response");
+  Future<void> loadMore() async {
+    if (isLoadingMore || !hasMore) return;
+
+    isLoadingMore = true;
+    update();
+
+    await _fetchItems();
+
+    isLoadingMore = false;
+    update();
+  }
+
+  Future<void> _fetchItems() async {
+    String sellerId = myServices.sharedPreferences.getString("id")!;
+    var response = await itemsDataSeller.get(sellerId, lastItemId: lastItemId);
+
+    print("Fetching items: lastItemId=$lastItemId");
+    print("Response: $response");
+
     statusRequest = handlingData(response);
 
     if (StatusRequest.success == statusRequest) {
       if (response['status'] == "success") {
         List datalist = response['data'];
+        print("Fetched ${datalist.length} items");
         data.addAll(datalist.map((e) => ItemsModel.fromJson(e)));
+
+        // تحديث المؤشر للتحميل التالي
+        lastItemId = response['next_cursor'] ?? 0;
+        hasMore = response['has_more'] ?? false;
+
+        print("Updated lastItemId: $lastItemId, hasMore: $hasMore");
       } else {
-        statusRequest = StatusRequest.failure;
+        hasMore = false;
+        if (lastItemId == 0) statusRequest = StatusRequest.failure;
+        print("Fetch items failed: ${response['message']}");
       }
+    } else {
+      print("StatusRequest is not success: $statusRequest");
     }
     update();
   }
 
   deleteItems(String id, String imagename) async {
-    // إظهار dialog للتأكيد
     Get.defaultDialog(
         title: "تحذير",
         middleText: "هل انت متآكد من عملية الحذف",
         onCancel: () {},
         onConfirm: () async {
-          // إرسال طلب الحذف إلى السيرفر
           var response = await itemsDataSeller.delete({
             'id': id,
             'imagename': imagename
@@ -57,13 +108,12 @@ class ItemsControllerSeller extends GetxController {
           print("Delete response: $response");
 
           if (response['status'] == "success") {
-            // حذف العنصر من القائمة المحلية
             data.removeWhere((element) => element.itemsId == id);
             update();
-            Get.back(); // إغلاق dialog
+            Get.back();
             Get.snackbar("نجح", "تم حذف المنتج بنجاح");
           } else {
-            Get.back(); // إغلاق dialog
+            Get.back();
             Get.snackbar("خطأ", "فشل في حذف المنتج");
           }
         }

@@ -1,4 +1,5 @@
 import 'package:ecommercecourse/controller/home_controller.dart';
+import 'package:ecommercecourse/controller/homescreen_controller.dart';
 import 'package:ecommercecourse/core/class/handlingdataview.dart';
 import 'package:ecommercecourse/core/constant/routes.dart';
 import 'package:ecommercecourse/data/model/itemsmodel.dart';
@@ -7,69 +8,141 @@ import 'package:ecommercecourse/view/widget/home/customcardhome.dart';
 import 'package:ecommercecourse/view/widget/home/listcategorieshome.dart';
 import 'package:ecommercecourse/view/widget/home/listitemshome.dart';
 import 'package:ecommercecourse/view/widget/home/product_badges.dart';
+import 'package:ecommercecourse/view/widget/loading/home_loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
 import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:visibility_detector/visibility_detector.dart';
+import 'package:intl/intl.dart' as intl;
+import 'package:flutter/services.dart'; // إضافة المكتبة لاستخدام SystemUiOverlayStyle
 
+import '../../core/class/statusrequest.dart';
+import '../../core/constant/color.dart';
 import '../../linkapi.dart';
 import '../widget/items/items_search/customlistitemssearch.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  late ScrollController _scrollController;
+  late HomeControllerImp controller;
+
+  // دالة لتنسيق الأسعار بالفواصل
+  String formatPrice(String? price) {
+    if (price == null || price.isEmpty) return "0";
+
+    double? priceValue = double.tryParse(price);
+    if (priceValue == null) return price;
+
+    final formatter = intl.NumberFormat('#,###', 'en_US');
+    return formatter.format(priceValue.toInt());
+  }
+
+  // دالة للتحقق من وصول المستخدم إلى نهاية القائمة
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      // تحميل المزيد من البيانات عند الاقتراب من النهاية
+      controller.loadMore();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+
+    // تمرير ScrollController إلى HomeScreenController
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final homeScreenController = Get.find<HomeScreenControllerImp>();
+        homeScreenController.setScrollController(_scrollController);
+      } catch (e) {
+        print('HomeScreenController not found: $e');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    Get.put(HomeControllerImp());
-    return GetBuilder<HomeControllerImp>(
-      builder: (controller) => Scaffold(
-        body: NotificationListener<ScrollNotification>(
-          onNotification: (ScrollNotification scrollInfo) {
-            return true;
+    controller = Get.put(HomeControllerImp());
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: AppColor.primaryColor, // لون الشريط العلوي
+        statusBarIconBrightness: Brightness.light, // لون الأيقونات (أبيض) لتتناسب مع اللون الداكن
+      ),
+      child: GetBuilder<HomeControllerImp>(
+        builder: (controller) => WillPopScope(
+          onWillPop: () async {
+            // إذا كان حقل البحث يحتوي على نص، قم بحذفه
+            if (controller.search!.text.isNotEmpty) {
+              controller.search!.clear();
+              controller.checkSearch("");
+              return false; // منع الخروج من التطبيق
+            }
+            return true; // السماح بالخروج الطبيعي
           },
-          child: SafeArea(
-            child: LiquidPullToRefresh(
-              onRefresh: () async {
-                await controller.refreshData();
-                return Future.delayed(Duration.zero);
+          child: Scaffold(
+            body: NotificationListener<ScrollNotification>(
+              onNotification: (ScrollNotification scrollInfo) {
+                return true;
               },
-              color: AppColor.primaryColor,
-              backgroundColor: AppColor.backgroundcolor,
-              height: 100,
-              animSpeedFactor: 1.5,
-              showChildOpacityTransition: false,
-              child: CustomScrollView(
-                physics: const BouncingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics(),
-                ),
-                cacheExtent: 1000,
-                slivers: [
-                  SliverPersistentHeader(
-                    delegate: _SliverAppBarDelegate(
-                      child: Container(
-                        color: AppColor.primaryColor,
-                        child: CustomAppBar(
-                          mycontroller: controller.search!,
-                          titleappbar: "ابحث عن منتج",
-                          onPressedSearch: () => controller.onSearchItems(),
-                          onChanged: (val) => controller.checkSearch(val),
-                          onPressedIconFavorite: () => Get.toNamed(AppRoute.myfavroite),
+              child: SafeArea(
+                child: LiquidPullToRefresh(
+                  onRefresh: () async {
+                    await controller.refreshData();
+                    return Future.delayed(Duration.zero);
+                  },
+                  color: AppColor.primaryColor,
+                  backgroundColor: AppColor.backgroundcolor,
+                  height: 100,
+                  animSpeedFactor: 1.5,
+                  showChildOpacityTransition: false,
+                  child: CustomScrollView(
+                    controller: _scrollController,
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
+                    cacheExtent: 2000,
+                    slivers: [
+                      SliverPersistentHeader(
+                        delegate: _SliverAppBarDelegate(
+                          child: Container(
+                            color: AppColor.primaryColor,
+                            child: CustomAppBar(
+                              mycontroller: controller.search!,
+                              titleappbar: "ابحث عن منتج".tr,
+                              onPressedSearch: () => controller.onSearchItems(),
+                              onChanged: (val) => controller.checkSearch(val),
+                              onPressedIconFavorite: () => Get.toNamed(AppRoute.myfavroite),
+                              carData: controller.carDataLoaded ? controller.carData : null,
+                            ),
+                          ),
+                          minHeight: 80,
+                          maxHeight: 80,
                         ),
+                        pinned: true,
                       ),
-                      minHeight: 80,
-                      maxHeight: 80,
-                    ),
-                    pinned: true,
+                      SliverToBoxAdapter(
+                        child: _buildMainContent(controller, context),
+                      ),
+                    ],
                   ),
-                  SliverToBoxAdapter(
-                    child: HandlingDataView(
-                      statusRequest: controller.statusRequest,
-                      widget: controller.isSearch
-                          ? _buildSearchResults(controller)
-                          : _buildHomeContent(controller, context),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -78,12 +151,123 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  Widget _buildMainContent(HomeControllerImp controller, BuildContext context) {
+    // إذا كان في حالة البحث
+    if (controller.isSearch) {
+      return HandlingDataView(
+        statusRequest: controller.statusRequest,
+        widget: _buildSearchResults(controller),
+      );
+    }
+
+    // إذا كان في حالة التحميل
+    if (controller.statusRequest == StatusRequest.loading) {
+      return const HomeLoadingWidget();
+    }
+
+    // إذا كان هناك خطأ
+    if (controller.statusRequest == StatusRequest.failure ||
+        controller.statusRequest == StatusRequest.serverfailure) {
+      return _buildErrorWidget(controller);
+    }
+
+    // إذا كانت البيانات محملة بنجاح
+    if (controller.statusRequest == StatusRequest.success) {
+      return _buildHomeContent(controller, context);
+    }
+
+    // الحالة الافتراضية
+    return const HomeLoadingWidget();
+  }
+
+  Widget _buildErrorWidget(HomeControllerImp controller) {
+    return Container(
+      height: MediaQuery.of(Get.context!).size.height * 0.7,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 80,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'حدث خطأ في تحميل البيانات',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'تأكد من اتصالك بالإنترنت وحاول مرة أخرى'.tr,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (controller.carDataError != null) ...[
+              const SizedBox(height: 15),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.orange.shade600,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        controller.carDataError!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.orange.shade700,
+                        ),
+                        textAlign: TextAlign.right,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 30),
+            ElevatedButton.icon(
+              onPressed: () => controller.getdata(),
+              icon: const Icon(Icons.refresh),
+              label: Text('إعادة المحاولة'.tr),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColor.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildHomeContent(HomeControllerImp controller, BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
           child: CustomCardHome(
             title: controller.titleHomeCard,
             body: controller.bodyHomeCard,
@@ -101,33 +285,19 @@ class HomePage extends StatelessWidget {
         children: [
           // عنوان منتجاتنا
           Padding(
-            padding: const EdgeInsets.only(right: 15, left: 15, top: 15, bottom: 10),
+            padding: const EdgeInsets.only(right: 15, left: 15, top: 0, bottom: 5),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  "منتجاتنا",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColor.black,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    // يمكن إضافة وظيفة للذهاب إلى صفحة كل المنتجات
-                  },
-                  child: const Text(
-                    "عرض الكل",
-                    style: TextStyle(color: AppColor.primaryColor),
-                  ),
-                ),
               ],
             ),
           ),
 
           // عرض المنتجات المحسن
           _buildEnhancedItemsList(controller),
+
+          // عرض مؤشر التحميل للمزيد من المنتجات
+          _buildLoadMoreIndicator(controller),
 
           // مساحة إضافية في نهاية القائمة
           const SizedBox(height: 100),
@@ -137,25 +307,128 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildEnhancedItemsList(HomeControllerImp controller) {
-    return GridView.builder(
+    if (controller.items.isEmpty) {
+      return Container(
+        height: 300,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.shopping_bag_outlined,
+                size: 60,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 15),
+              Text(
+                'لا توجد منتجات متاحة حالياً'.tr,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.75, // نسبة محسنة
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-      ),
-      itemCount: controller.items.length,
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      itemCount: (controller.items.length / 2).ceil(),
+      cacheExtent: 1500,
+      addAutomaticKeepAlives: true,
+      addRepaintBoundaries: true,
       itemBuilder: (context, index) {
-        ItemsModel itemsModel = ItemsModel.fromJson(controller.items[index]);
-        return _buildProductCard(itemsModel, controller);
+        int firstIndex = index * 2;
+        int secondIndex = firstIndex + 1;
+
+        return AnimationConfiguration.staggeredList(
+          position: index,
+          duration: const Duration(milliseconds: 375),
+          child: SlideAnimation(
+            verticalOffset: 50.0,
+            child: FadeInAnimation(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 5),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildProductCard(
+                        ItemsModel.fromJson(controller.items[firstIndex]),
+                        controller,
+                        firstIndex,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    if (secondIndex < controller.items.length)
+                      Expanded(
+                        child: _buildProductCard(
+                          ItemsModel.fromJson(controller.items[secondIndex]),
+                          controller,
+                          secondIndex,
+                        ),
+                      )
+                    else
+                      const Expanded(child: SizedBox()),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
       },
     );
   }
 
-  Widget _buildProductCard(ItemsModel itemsModel, HomeControllerImp controller) {
+  // إضافة widget لعرض مؤشر تحميل المزيد
+  Widget _buildLoadMoreIndicator(HomeControllerImp controller) {
+    if (controller.isLoadingMore) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Center(
+          child: Column(
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColor.primaryColor),
+                strokeWidth: 2,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'جاري تحميل المزيد...'.tr,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // إذا لم يعد هناك المزيد للتحميل
+    if (!controller.hasMore && controller.items.isNotEmpty) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Center(
+          child: Text(
+            'تم عرض جميع المنتجات'.tr,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[500],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildProductCard(ItemsModel itemsModel, HomeControllerImp controller, int index) {
     double discount = double.tryParse(itemsModel.itemsDiscount ?? "0") ?? 0;
     double originalPrice = double.tryParse(itemsModel.itemsPrice ?? "0") ?? 0;
     double deliveryPrice = 0;
@@ -165,144 +438,183 @@ class HomePage extends StatelessWidget {
     // استخراج الصورة الأولى
     String firstImage = controller.getFirstImage(itemsModel.itemsImage);
 
-    return GestureDetector(
-      onTap: () => controller.goToPageProductDetails(itemsModel),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: 1,
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // صورة المنتج
-                Expanded(
-                  flex: 3,
-                  child: Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        topRight: Radius.circular(12),
+    return VisibilityDetector(
+      key: Key('product-${itemsModel.itemsId}-$index'),
+      onVisibilityChanged: (visibilityInfo) {
+        // يمكن إضافة منطق إضافي هنا عند الحاجة
+      },
+      child: GestureDetector(
+        onTap: () => controller.goToPageProductDetails(itemsModel),
+        child: Container(
+          height: 280,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // صورة المنتج
+                  Expanded(
+                    flex: 3,
+                    child: Container(
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
                       ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        topRight: Radius.circular(12),
-                      ),
-                      child: firstImage.isNotEmpty
-                          ? Image.network(
-                        "${AppLink.imagestItems}/$firstImage",
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
+                        child: firstImage.isNotEmpty
+                            ? CachedNetworkImage(
+                          imageUrl: "${AppLink.imagestItems}/$firstImage",
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: Colors.grey[200],
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(AppColor.primaryColor),
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
                             color: Colors.grey[200],
                             child: const Icon(
                               Icons.image_not_supported,
                               color: Colors.grey,
+                              size: 40,
                             ),
-                          );
-                        },
-                      )
-                          : Container(
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.image_not_supported,
-                          color: Colors.grey,
+                          ),
+                          memCacheWidth: 400,
+                          memCacheHeight: 400,
+                          maxWidthDiskCache: 400,
+                          maxHeightDiskCache: 400,
+                          fadeInDuration: const Duration(milliseconds: 300),
+                          fadeOutDuration: const Duration(milliseconds: 300),
+                        )
+                            : Container(
+                          color: Colors.grey[200],
+                          child: const Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey,
+                            size: 40,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                // تفاصيل المنتج
-                Expanded(
-                  flex: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // اسم المنتج - عرض الاسم الإنجليزي فقط
-                        Text(
-                          itemsModel.itemsName ?? "",
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColor.black,
-                            height: 1.2,
+                  // تفاصيل المنتج
+                  Expanded(
+                    flex: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // اسم المنتج
+                          Text(
+                            itemsModel.itemsName ?? "",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColor.black,
+                              height: 1.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textDirection: TextDirection.rtl,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textDirection: TextDirection.rtl,
-                        ),
 
-                        // الأسعار
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (hasDiscount) ...[
-                              Text(
-                                "${itemsModel.itemsPriceDiscount} د.ع",
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColor.primaryColor,
-                                ),
-                              ),
-                              Text(
-                                "${itemsModel.itemsPrice} د.ع",
+                          const SizedBox(height: 4),
+
+                          // عدد القطع المتوفرة
+                          Builder(
+                            builder: (context) {
+                              int itemCount = int.tryParse(itemsModel.itemsCount ?? '0') ?? 0;
+                              bool isOutOfStock = itemCount == 0;
+
+                              return Text(
+                                isOutOfStock ? "نفذ المخزون".tr : "متوفر: ".tr + " ${itemsModel.itemsCount}" + " قطعة".tr,
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.grey[500],
-                                  decoration: TextDecoration.lineThrough,
+                                  color: isOutOfStock ? Colors.red : Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
                                 ),
-                              ),
-                            ] else ...[
-                              Text(
-                                "${itemsModel.itemsPrice} د.ع",
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColor.primaryColor,
+                              );
+                            },
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          // الأسعار
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (hasDiscount) ...[
+                                Text(
+                                  "${formatPrice(itemsModel.itemsPriceDiscount)} " + "د.ع".tr,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColor.primaryColor,
+                                  ),
                                 ),
-                              ),
+                                Text(
+                                  "${formatPrice(itemsModel.itemsPrice)} " + "د.ع".tr,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey[500],
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
+                                ),
+                              ] else ...[
+                                Text(
+                                  "${formatPrice(itemsModel.itemsPrice)} " + "د.ع".tr,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColor.primaryColor,
+                                  ),
+                                ),
+                              ],
                             ],
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            // الشارات - استخدام الكلاس المنفصل
-            Positioned(
-              top: 6,
-              right: 6,
-              child: ProductBadges.buildBadgesColumn(
-                hasDiscount: hasDiscount,
-                discount: discount,
-                hasFreeDelivery: hasFreeDelivery,
-                // يمكنك إضافة المزيد من الخصائص حسب الحاجة
-                // isNew: true,
-                // isBestSeller: false,
-                // isOutOfStock: false,
+                ],
               ),
-            ),
-          ],
+              // الشارات
+              Positioned(
+                top: 6,
+                right: 6,
+                child: ProductBadges.buildBadgesColumn(
+                  hasDiscount: hasDiscount,
+                  discount: discount,
+                  hasFreeDelivery: hasFreeDelivery,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -314,12 +626,8 @@ class HomePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 2),
-          ),
-          ListItemsSearch(
-            listdatamodel: controller.listdata,
-            animation: false,
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 15, vertical: 2),
           ),
         ],
       ),

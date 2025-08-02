@@ -11,16 +11,28 @@ static const String imageststatic = "https://lightsalmon-owl-235921.hostingersit
 //
   static const String test = "$server/test.php";
 
-  static const String notification = "$server/notification.php";
+  static const String notification = "$server/notification/notification.php";
+  static const String notificationCount = "$server/notification/notification_count.php";
+  static const String notificationMarkRead = "$server/notification/notification_mark_read.php";
 
-// ================================= Auth ========================== //
-
+//============================ Auth ==========================
   static const String signUp = "$server/auth/signup.php";
   static const String login = "$server/auth/login.php";
   static const String verifycodessignup = "$server/auth/verfiycode.php";
   static const String resend = "$server/auth/resend.php";
 
+  // Phone OTP Authentication
+  static const String checkUser = "$server/auth/phone/check_user.php";
+  static const String sendOtp = "$server/auth/phone/send_otp.php";
+  static const String verifyOtp = "$server/auth/phone/verify_otp.php";
+  static const String completeRegistration = "$server/auth/phone/complete_registration.php";
+
+  // Auth & Guest Account
+  static const String createGuestAccount = "$server/auth/phone/create_guest_account.php";
+  static const String updateGuestActivity = "$server/auth/phone/update_guest_activity.php";
+
 // ================================= ForgetPassword ========================== //
+
 
   static const String checkEmail = "$server/forgetpassword/checkemail.php";
   static const String resetPassword =

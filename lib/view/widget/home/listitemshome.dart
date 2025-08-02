@@ -15,10 +15,10 @@ class ListItemsHome extends StatelessWidget {
   final bool onRefresh;
 
   const ListItemsHome({
-    Key? key,
+    super.key,
     required this.items,
     required this.onRefresh,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -49,15 +49,8 @@ class ListItemsHome extends StatelessWidget {
 
   void _navigateToProductDetails(ItemsModel item, BuildContext context) {
     final controller = Get.find<HomeControllerImp>();
-    if (controller is HomeControllerImp) {
-      controller.goToPageProductDetails(item);
-    } else {
-      Get.toNamed(
-        AppRoute.productdetails,
-        arguments: {'itemsmodel': item},
-      );
+    controller.goToPageProductDetails(item);
     }
-  }
 }
 
 class ItemCard extends StatelessWidget {
@@ -65,10 +58,10 @@ class ItemCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const ItemCard({
-    Key? key,
+    super.key,
     required this.item,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

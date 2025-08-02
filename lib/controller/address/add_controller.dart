@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:ecommercecourse/core/class/statusrequest.dart';
 import 'package:ecommercecourse/core/constant/routes.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 
 class AddAddressController extends GetxController {
@@ -25,7 +24,7 @@ class AddAddressController extends GetxController {
         arguments: {"lat": lat.toString(), "long": long.toString()});
   }
 
-  Position? position;
+
 
   getCurrentLocation() async {
     // يمكن استدعاء geolocator للحصول على الموقع الحالي، لكننا نقوم بتعيين القيم إلى 0 لتفادي المشاكل

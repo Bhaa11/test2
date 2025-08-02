@@ -56,14 +56,15 @@ class CustomItemsCartList extends StatelessWidget {
 
     return Card(
       elevation: 2.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: screenWidth * 0.03,
-            vertical: screenWidth * 0.02,
+            horizontal: screenWidth * 0.01,
+            vertical: screenWidth * 0.01,
           ),
           child: Row(
             children: [
@@ -80,7 +81,7 @@ class CustomItemsCartList extends StatelessWidget {
   }
 
   Widget _buildProductImage(BuildContext context) {
-    final size = MediaQuery.of(context).size.width * 0.18;
+    final size = MediaQuery.of(context).size.width * 0.25;
 
     // استخراج الصورة الأولى
     String firstImage = getFirstImage(imagename);
@@ -174,7 +175,6 @@ class CustomItemsCartList extends StatelessWidget {
               vertical: screenWidth * 0.01,
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
               borderRadius: BorderRadius.circular(8),
             ),
             constraints: BoxConstraints(minWidth: screenWidth * 0.07),

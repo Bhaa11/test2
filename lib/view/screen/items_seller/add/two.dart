@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -7,6 +8,35 @@ import 'package:intl/intl.dart'; // إضافة مكتبة intl للتنسيق
 import '../../../../controller/items_seller/add_controller.dart';
 import '../../../../core/constant/color.dart';
 import '../../../../core/functions/validinput.dart';
+
+class NumberInputFormatter extends TextInputFormatter {
+  final NumberFormat _formatter = NumberFormat("#,###", "ar");
+
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    // إزالة الفواصل من النص الجديد
+    String cleanText = newValue.text.replaceAll(',', '');
+
+    // التحقق من أن النص يحتوي على أرقام فقط
+    if (!RegExp(r'^\d+$').hasMatch(cleanText)) {
+      return oldValue;
+    }
+
+    // تنسيق الرقم بإضافة الفواصل
+    int number = int.parse(cleanText);
+    String formattedText = _formatter.format(number);
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedText.length),
+    );
+  }
+}
 
 class ItemsAddStepTwo extends StatefulWidget {
   const ItemsAddStepTwo({super.key});
@@ -22,7 +52,7 @@ class _ItemsAddStepTwoState extends State<ItemsAddStepTwo> {
 
   // متغيرات تخزين الخيارات المحددة
   int? _selectedDeliveryPrice;
-  String? _selectedDeliveryDuration;
+  int? _selectedDeliveryDuration; // تغيير النوع إلى int
   int? _selectedDiscount = 0; // قيمة افتراضية للخصم
   double? _finalPrice;
 
@@ -32,19 +62,19 @@ class _ItemsAddStepTwoState extends State<ItemsAddStepTwo> {
   // قائمة خيارات سعر التوصيل من 1000 إلى 50000
   final List<int> _deliveryPrices = List<int>.generate(50, (i) => (i + 1) * 1000);
 
-  // قائمة خيارات مدة التوصيل
-  final List<String> _deliveryDurations = [
-    '24 ساعة',
-    'يومين',
-    'ثلاث أيام',
-    'أربع أيام',
-    'خمس أيام',
-    'ستة أيام',
-    'أسبوع'
-  ];
+  // تعديل قائمة مدة التوصيل لترجع أرقام
+  final Map<String, int> _deliveryDurations = {
+    '24 ساعة': 1,
+    'يومين': 2,
+    'ثلاث أيام': 3,
+    'أربع أيام': 4,
+    'خمس أيام': 5,
+    'ستة أيام': 6,
+    'أسبوع': 7,
+  };
 
-  // قائمة خيارات نسبة الخصم من 0% إلى 100% بقفزات 5%
-  final List<int> _discountOptions = List<int>.generate(21, (i) => i * 5);
+  // تعديل قائمة الخصم لتصل إلى 95% فقط
+  final List<int> _discountOptions = List<int>.generate(20, (i) => i * 5);
 
   // مفاتيح التخزين في GetStorage
   static const String keyDeliveryPrice = 'lastDeliveryPrice';
@@ -74,10 +104,10 @@ class _ItemsAddStepTwoState extends State<ItemsAddStepTwo> {
       }
 
       // استرجاع مدة التوصيل المخزنة
-      final lastDuration = _storage.read<String>(keyDeliveryDuration);
+      final lastDuration = _storage.read<int>(keyDeliveryDuration);
       if (lastDuration != null) {
         _selectedDeliveryDuration = lastDuration;
-        controller.deliveryDuration.text = lastDuration;
+        controller.deliveryDuration.text = lastDuration.toString();
         print('استرجاع مدة التوصيل: $lastDuration');
       }
 
@@ -107,7 +137,9 @@ class _ItemsAddStepTwoState extends State<ItemsAddStepTwo> {
       final discount = double.tryParse(controller.discount.text) ?? 0;
 
       setState(() {
-        _finalPrice = price - (price * discount / 100);
+        double calculatedPrice = price - (price * discount / 100);
+        // تقريب السعر إلى أقرب مضاعف لـ 500
+        _finalPrice = (calculatedPrice / 500).round() * 500.0;
       });
 
       print('تم حساب السعر النهائي: $_finalPrice من السعر الأصلي: $price والخصم: $discount%');
@@ -117,7 +149,7 @@ class _ItemsAddStepTwoState extends State<ItemsAddStepTwo> {
   }
 
   // حفظ خيارات التوصيل في التخزين المحلي
-  void _saveDeliveryOptions(int? price, String? duration, int? discount) {
+  void _saveDeliveryOptions(int? price, int? duration, int? discount) {
     if (price != null) {
       _storage.write(keyDeliveryPrice, price);
       print('تم حفظ سعر التوصيل: $price');
@@ -223,10 +255,11 @@ class _ItemsAddStepTwoState extends State<ItemsAddStepTwo> {
           hintText: 'السعر بالدينار العراقي',
           suffix: 'د.ع',
           icon: Icons.monetization_on,
-          validator: (v) => validInput(v?.replaceAll(',', '') ?? '', 1, 10, 'number'),
+          validator: (v) => validInput(v ?? '', 1, 10, 'number'),
           onChanged: (value) {
             _updateFinalPrice();
           },
+          useFormatter: true,
         ),
         SizedBox(height: 16.h),
 
@@ -236,6 +269,7 @@ class _ItemsAddStepTwoState extends State<ItemsAddStepTwo> {
           hintText: 'عدد القطع المتوفرة',
           icon: Icons.inventory_2,
           validator: (v) => validInput(v?.replaceAll(',', '') ?? '', 1, 5, 'number'),
+          showIncrementButtons: true,
         ),
       ],
     );
@@ -296,7 +330,7 @@ class _ItemsAddStepTwoState extends State<ItemsAddStepTwo> {
             SizedBox(width: 16.w),
             // اختيار مدة التوصيل
             Expanded(
-              child: DropdownButtonFormField<String>(
+              child: DropdownButtonFormField<int>(
                 isExpanded: true,
                 value: _selectedDeliveryDuration,
                 decoration: _buildDropdownDecoration('مدة التوصيل'),
@@ -304,16 +338,16 @@ class _ItemsAddStepTwoState extends State<ItemsAddStepTwo> {
                   Icons.arrow_drop_down_circle_outlined,
                   color: AppColor.primaryColor,
                 ),
-                items: _deliveryDurations
-                    .map((dur) => DropdownMenuItem(
-                  value: dur,
-                  child: Text(dur, style: TextStyle(fontSize: 14.sp)),
+                items: _deliveryDurations.entries
+                    .map((entry) => DropdownMenuItem(
+                  value: entry.value,
+                  child: Text(entry.key, style: TextStyle(fontSize: 14.sp)),
                 ))
                     .toList(),
                 onChanged: (val) {
                   setState(() {
                     _selectedDeliveryDuration = val;
-                    controller.deliveryDuration.text = val!;
+                    controller.deliveryDuration.text = val.toString();
                     // حفظ القيمة المحددة في التخزين
                     _saveDeliveryOptions(null, val, null);
                   });
@@ -540,6 +574,8 @@ class _ItemsAddStepTwoState extends State<ItemsAddStepTwo> {
     String? hintText,
     String? suffix,
     Function(String)? onChanged,
+    bool showIncrementButtons = false,
+    bool useFormatter = false,
   }) {
     return TextFormField(
       controller: controller,
@@ -547,34 +583,8 @@ class _ItemsAddStepTwoState extends State<ItemsAddStepTwo> {
       validator: validator,
       textAlign: TextAlign.right,
       style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
+      inputFormatters: useFormatter ? [NumberInputFormatter()] : null,
       onChanged: (value) {
-        // محاولة تنسيق النص مع إضافة فواصل للأرقام
-        if (value.isNotEmpty) {
-          try {
-            // إزالة كل الفواصل من النص لتحويله إلى رقم
-            final cleanValue = value.replaceAll(',', '');
-            final number = int.parse(cleanValue);
-            final formatted = _formatNumber(number);
-
-            // تجنب حلقة لا نهائية في التحديث
-            if (formatted != value) {
-              final currentPos = controller.selection.baseOffset;
-              // حساب الفرق في الطول قبل وبعد التنسيق
-              final lengthDiff = formatted.length - value.length;
-              // تحديث TextEditingValue
-              controller.value = TextEditingValue(
-                text: formatted,
-                selection: TextSelection.collapsed(
-                  offset: currentPos + lengthDiff > 0 ? currentPos + lengthDiff : formatted.length,
-                ),
-              );
-            }
-          } catch (e) {
-            // تجاهل الخطأ في حالة كانت القيمة غير صالحة للتحويل
-            print('خطأ في تنسيق الرقم: $e');
-          }
-        }
-
         // استدعاء الدالة المخصصة إذا تم تمريرها
         if (onChanged != null) {
           onChanged(value);
@@ -583,7 +593,8 @@ class _ItemsAddStepTwoState extends State<ItemsAddStepTwo> {
       decoration: InputDecoration(
         labelText: label,
         hintText: hintText,
-        suffixText: suffix,
+        suffixText: !showIncrementButtons ? suffix : null,
+        suffixIcon: showIncrementButtons ? _buildIncrementButtons(controller, onChanged) : null,
         floatingLabelBehavior: FloatingLabelBehavior.auto,
         prefixIcon: Icon(icon, color: AppColor.primaryColor),
         contentPadding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
@@ -609,6 +620,98 @@ class _ItemsAddStepTwoState extends State<ItemsAddStepTwo> {
     );
   }
 
+  Widget _buildIncrementButtons(TextEditingController controller, Function(String)? onChanged) {
+    return Container(
+      width: 80.w,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // زر النقصان
+          InkWell(
+            onTap: () => _decrementValue(controller, onChanged),
+            borderRadius: BorderRadius.circular(8.r),
+            child: Container(
+              width: 32.w,
+              height: 32.h,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Icon(
+                Icons.remove,
+                size: 18.sp,
+                color: AppColor.primaryColor,
+              ),
+            ),
+          ),
+          SizedBox(width: 8.w),
+          // زر الزيادة
+          InkWell(
+            onTap: () => _incrementValue(controller, onChanged),
+            borderRadius: BorderRadius.circular(8.r),
+            child: Container(
+              width: 32.w,
+              height: 32.h,
+              decoration: BoxDecoration(
+                color: AppColor.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(color: AppColor.primaryColor),
+              ),
+              child: Icon(
+                Icons.add,
+                size: 18.sp,
+                color: AppColor.primaryColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _incrementValue(TextEditingController controller, Function(String)? onChanged) {
+    final currentValue = controller.text;
+    int value = 0;
+
+    if (currentValue.isNotEmpty) {
+      try {
+        value = int.parse(currentValue);
+      } catch (e) {
+        value = 0;
+      }
+    }
+
+    value++;
+    controller.text = value.toString();
+
+    if (onChanged != null) {
+      onChanged(value.toString());
+    }
+  }
+
+  void _decrementValue(TextEditingController controller, Function(String)? onChanged) {
+    final currentValue = controller.text;
+    int value = 0;
+
+    if (currentValue.isNotEmpty) {
+      try {
+        value = int.parse(currentValue);
+      } catch (e) {
+        value = 0;
+      }
+    }
+
+    if (value > 0) {
+      value--;
+      controller.text = value.toString();
+
+      if (onChanged != null) {
+        onChanged(value.toString());
+      }
+    }
+  }
+
   Widget _buildNextButton() {
     return Container(
       width: double.infinity,
@@ -631,14 +734,7 @@ class _ItemsAddStepTwoState extends State<ItemsAddStepTwo> {
       ),
       child: ElevatedButton(
         onPressed: () {
-          // قبل المتابعة، تأكد من إزالة الفواصل من قيمة السعر المرسلة للخادم
-          String originalPrice = controller.price.text;
-          controller.price.text = originalPrice.replaceAll(',', '');
           controller.nextStep();
-          // استعادة النص المنسق للعرض بعد إرسال الطلب
-          Future.delayed(Duration.zero, () {
-            controller.price.text = originalPrice;
-          });
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:get/get.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 
 import '../../core/class/statusrequest.dart';
 import '../../core/functions/handingdatacontroller.dart';
@@ -17,29 +17,12 @@ class OrdersDetailsController extends GetxController {
 
   late OrdersModel ordersModel;
 
-  late Completer<GoogleMapController> completercontroller;
-
-  List<Marker> markers = [];
-
-  double? lat;
+double? lat;
   double? long;
 
-  CameraPosition? cameraPosition;
-
   intialData() {
-    completercontroller =
-        Completer<GoogleMapController>();
-    if (ordersModel.ordersType == "0") {
-      cameraPosition = CameraPosition(
-        target: LatLng(double.parse(ordersModel.addressLat!),
-            double.parse(ordersModel.addressLong!)),
-        zoom: 12.4746,
-      );
-      markers.add(Marker(
-          markerId: MarkerId("1"),
-          position: LatLng(double.parse(ordersModel.addressLat!),
-              double.parse(ordersModel.addressLong!))));
-    }
+
+
   }
 
   @override

@@ -16,7 +16,7 @@ class AddressAddDetails extends StatelessWidget {
     Get.put(AddAddressDetailsController());
     return WillPopScope(
       onWillPop: () async {
-        if (Get.arguments?['fromCart'] == true)  {
+        if (Get.arguments?['fromCart'] == true) {
           Get.offNamed(AppRoute.cart);
         } else {
           Get.offNamed(AppRoute.homepage);
@@ -51,18 +51,13 @@ class AddressAddDetails extends StatelessWidget {
                             color: Colors.grey[800]),
                       ),
                       const SizedBox(height: 32),
-                      _buildInputField(
-                        controller: controller.city,
-                        label: "المدينة",
-                        icon: Icons.location_city_outlined,
-                        hint: "أدخل مدينتك",
-                      ),
+                      _buildCityDropdown(controller: controller),
                       const SizedBox(height: 24),
                       _buildInputField(
                         controller: controller.street,
-                        label: "المنطقة",
+                        label: "المدينة",
                         icon: Icons.streetview_outlined,
-                        hint: "أدخل اسم المنطقة",
+                        hint: "المدينة و أقرب نقطة دالة",
                       ),
                       const SizedBox(height: 24),
                       _buildInputField(
@@ -95,6 +90,87 @@ class AddressAddDetails extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCityDropdown({required AddAddressDetailsController controller}) {
+    final List<String> iraqiGovernorates = [
+      'بغداد',
+      'أربيل',
+      'ديالى',
+      'البصرة',
+      'دهوك',
+      'السليمانية',
+      'كركوك',
+      'الأنبار',
+      'نينوى',
+      'كربلاء',
+      'النجف',
+      'القادسية',
+      'المثنى',
+      'ميسان',
+      'واسط',
+      'بابل',
+      'صلاح الدين',
+      'حلبجة',
+      'ذي قار',
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Text(
+            'المحافظة',
+            style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: DropdownButtonFormField<String>(
+            value: controller.city.text.isEmpty ? null : controller.city.text,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              prefixIcon: Icon(Icons.location_city_outlined, color: Colors.grey[500]),
+              hintText: "اختر المحافظة",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+              hintStyle: TextStyle(color: Colors.grey[400]),
+            ),
+            style: TextStyle(color: Colors.grey[800], fontSize: 16),
+            items: iraqiGovernorates.map((String governorate) {
+              return DropdownMenuItem<String>(
+                value: governorate,
+                child: Text(governorate),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                controller.city.text = newValue;
+              }
+            },
+          ),
+        ),
+      ],
     );
   }
 

@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constant/color.dart';
+import '../../../../core/constant/routes.dart';
 import '../../../../data/model/itemsmodel.dart';
 import '../../../../linkapi.dart';
 import '../../home/product_badges.dart';
@@ -20,6 +25,7 @@ class ProductListComponents {
         required Function(bool) onDiscountFilterChanged,
         required Function(bool) onFreeDeliveryFilterChanged,
         required VoidCallback onSortPressed,
+        required Function(String) onLocalSearch, // إضافة هذا المعامل
       }) {
     return ProductSearchFilter.buildSearchAndFilterBar(
       context,
@@ -32,6 +38,7 @@ class ProductListComponents {
       onDiscountFilterChanged: onDiscountFilterChanged,
       onFreeDeliveryFilterChanged: onFreeDeliveryFilterChanged,
       onSortPressed: onSortPressed,
+      onLocalSearch: onLocalSearch, // تمرير المعامل
     );
   }
 
@@ -62,9 +69,12 @@ class ProductListComponents {
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 0,
-        mainAxisSpacing: 7,
-        childAspectRatio: 0.72,
+        mainAxisSpacing: 0,
+        childAspectRatio: 0.75,
       ),
+      cacheExtent: 1000,
+      addAutomaticKeepAlives: true,
+      addRepaintBoundaries: true,
       itemBuilder: (context, index) {
         final item = items[index];
         return animation
@@ -75,11 +85,11 @@ class ProductListComponents {
           child: ScaleAnimation(
             scale: 0.95,
             child: FadeInAnimation(
-              child: _buildProductCard(context, item, onTap),
+              child: _buildProductCard(context, item, onTap, index),
             ),
           ),
         )
-            : _buildProductCard(context, item, onTap);
+            : _buildProductCard(context, item, onTap, index);
       },
     );
   }
@@ -93,8 +103,11 @@ class ProductListComponents {
       itemCount: items.length,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
       separatorBuilder: (context, index) => const SizedBox(height: 0),
+      cacheExtent: 1500,
+      addAutomaticKeepAlives: true,
+      addRepaintBoundaries: true,
       itemBuilder: (context, index) {
         final item = items[index];
         return animation
@@ -104,11 +117,11 @@ class ProductListComponents {
           child: SlideAnimation(
             horizontalOffset: 50,
             child: FadeInAnimation(
-              child: _buildListItemCard(context, item, onTap),
+              child: _buildListItemCard(context, item, onTap, index),
             ),
           ),
         )
-            : _buildListItemCard(context, item, onTap);
+            : _buildListItemCard(context, item, onTap, index);
       },
     );
   }
@@ -169,20 +182,6 @@ class ProductListComponents {
                 color: Colors.grey[500],
               ),
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                // يمكن إضافة وظيفة للذهاب إلى صفحة التصفح
-              },
-              style: ElevatedButton.styleFrom(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text("تصفح المنتجات"),
-            ),
           ],
         ),
       ),
@@ -190,12 +189,12 @@ class ProductListComponents {
   }
 
   static Widget _buildProductCard(
-      BuildContext context, ItemsModel item, Function(ItemsModel) onTap) {
+      BuildContext context, ItemsModel item, Function(ItemsModel) onTap, int index) {
     final theme = Theme.of(context);
-
+    String firstImage = ProductUtils.getFirstImage(item.itemsImage);
     return Card(
+      color: Colors.white,
       clipBehavior: Clip.antiAlias,
-      elevation: 1.5,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -205,8 +204,7 @@ class ProductListComponents {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // صورة المنتج
-            _buildProductImage(item, context),
-
+            _buildProductImage(item, context, firstImage, index),
             // معلومات المنتج
             Expanded(
               child: Padding(
@@ -221,17 +219,16 @@ class ProductListComponents {
                         fontWeight: FontWeight.w600,
                         height: 1.2,
                       ),
-                      maxLines: 1, // تغيير من 2 إلى 1
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 10),
-
+                    const SizedBox(height: 5),
                     // السعر والتوصيل المجاني
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // مساحة ثابتة لسعر الخصم
-                        Container(
+                        SizedBox(
                           height: 14,
                           child: ProductUtils.hasDiscount(item)
                               ? Text(
@@ -253,7 +250,7 @@ class ProductListComponents {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 5),
                         // السعر الحالي
                         RichText(
                           text: TextSpan(
@@ -261,7 +258,7 @@ class ProductListComponents {
                               TextSpan(
                                 text: ProductUtils.getFinalPrice(item),
                                 style: TextStyle(
-                                  color: AppColor.primaryColor,
+                                  color: AppColor.secondColor,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
                                 ),
@@ -289,11 +286,13 @@ class ProductListComponents {
   }
 
   static Widget _buildListItemCard(
-      BuildContext context, ItemsModel item, Function(ItemsModel) onTap) {
+      BuildContext context, ItemsModel item, Function(ItemsModel) onTap, int index) {
+    String firstImage = ProductUtils.getFirstImage(item.itemsImage);
     return Card(
-      elevation: 1.5,
+      color: Colors.white,
+      elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(0),
       ),
       child: InkWell(
         onTap: () => onTap(item),
@@ -301,26 +300,30 @@ class ProductListComponents {
         child: Padding(
           padding: const EdgeInsets.all(0),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // صورة المنتج - بدون شارات
+              // صورة المنتج
               ClipRRect(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(16),
                 child: SizedBox(
-                  width: 130,
-                  height: 130,
-                  child: CachedNetworkImage(
-                    imageUrl: "${AppLink.imagestItems}/${item.itemsImage}",
+                  width: 150,
+                  height: 150,
+                  child: firstImage.isNotEmpty
+                      ? CachedNetworkImage(
+                    imageUrl: "${AppLink.imagestItems}/$firstImage",
                     fit: BoxFit.cover,
                     placeholder: (context, url) => _buildImageShimmer(),
-                    errorWidget: (context, url, error) =>
-                        _buildImageErrorWidget(),
-                  ),
+                    errorWidget: (context, url, error) => _buildImageErrorWidget(),
+                    memCacheWidth: 300,
+                    memCacheHeight: 300,
+                    maxWidthDiskCache: 300,
+                    maxHeightDiskCache: 300,
+                    fadeInDuration: const Duration(milliseconds: 300),
+                  )
+                      : _buildImageErrorWidget(),
                 ),
               ),
-
               const SizedBox(width: 12),
-
               // تفاصيل المنتج
               Expanded(
                 child: Column(
@@ -334,19 +337,17 @@ class ProductListComponents {
                         color: Colors.black,
                         fontSize: 14,
                       ),
-                      maxLines: 1, // تغيير من 2 إلى 1
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-
                     const SizedBox(height: 8),
-
                     // الأسعار بشكل عمودي مع مساحة ثابتة
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // مساحة ثابتة للسعر قبل الخصم
-                        Container(
-                          height: 16, // ارتفاع ثابت
+                        SizedBox(
+                          height: 16,
                           child: ProductUtils.hasDiscount(item)
                               ? Text(
                             "${ProductUtils.getOriginalPrice(item)} د.ع",
@@ -356,26 +357,22 @@ class ProductListComponents {
                               fontSize: 12,
                             ),
                           )
-                              : const SizedBox(), // مساحة فارغة بنفس الارتفاع
+                              : const SizedBox(),
                         ),
-
                         // مسافة ثابتة بين السعرين
                         const SizedBox(height: 4),
-
                         // السعر النهائي
                         Text(
                           "${ProductUtils.getFinalPrice(item)} د.ع",
                           style: TextStyle(
-                            color: Colors.green[700],
+                            color: AppColor.secondColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 8),
-
                     // الشارات بشكل أفقي أسفل السعر
                     Row(
                       children: [
@@ -384,11 +381,9 @@ class ProductListComponents {
                           ProductBadges.buildDiscountBadge(
                             ProductUtils.getDiscountValue(item).toDouble(),
                           ),
-
                         // مسافة بين الشارات
                         if (ProductUtils.hasDiscount(item) && ProductUtils.hasFreeDelivery(item))
                           const SizedBox(width: 8),
-
                         // شارة التوصيل المجاني
                         if (ProductUtils.hasFreeDelivery(item))
                           ProductBadges.buildFreeDeliveryBadge(),
@@ -404,20 +399,27 @@ class ProductListComponents {
     );
   }
 
-  static Widget _buildProductImage(ItemsModel item, BuildContext context) {
+  static Widget _buildProductImage(ItemsModel item, BuildContext context, String firstImage, int index) {
     return AspectRatio(
       aspectRatio: 1.2,
       child: Stack(
         fit: StackFit.expand,
         children: [
           // صورة المنتج
-          CachedNetworkImage(
-            imageUrl: "${AppLink.imagestItems}/${item.itemsImage}",
+          firstImage.isNotEmpty
+              ? CachedNetworkImage(
+            imageUrl: "${AppLink.imagestItems}/$firstImage",
             fit: BoxFit.cover,
             placeholder: (context, url) => _buildImageShimmer(),
             errorWidget: (context, url, error) => _buildImageErrorWidget(),
-          ),
-
+            memCacheWidth: 400,
+            memCacheHeight: 400,
+            maxWidthDiskCache: 400,
+            maxHeightDiskCache: 400,
+            fadeInDuration: const Duration(milliseconds: 300),
+            fadeOutDuration: const Duration(milliseconds: 300),
+          )
+              : _buildImageErrorWidget(),
           // الشارات باستخدام النظام الجديد
           Positioned(
             top: 8,
@@ -445,6 +447,12 @@ class ProductListComponents {
           stops: const [0.1, 0.5, 0.9],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
+        ),
+      ),
+      child: const Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(AppColor.primaryColor),
         ),
       ),
     );
@@ -492,16 +500,55 @@ class ProductListComponents {
 class ProductUtils {
   static final NumberFormat formatter = NumberFormat('#,##0');
 
+  // دالة محسنة لاستخراج الصورة الأولى
+  static String getFirstImage(String? itemsImage) {
+    if (itemsImage == null || itemsImage.isEmpty) {
+      return '';
+    }
+    try {
+      // محاولة تحليل JSON أولاً
+      if (itemsImage.startsWith('{') || itemsImage.startsWith('[')) {
+        dynamic imageData = json.decode(itemsImage);
+        if (imageData is Map<String, dynamic>) {
+          // التحقق من وجود مصفوفة الصور
+          if (imageData.containsKey('images') && imageData['images'] is List) {
+            List images = imageData['images'];
+            if (images.isNotEmpty) {
+              return images[0].toString().trim();
+            }
+          }
+        } else if (imageData is List) {
+          // إذا كانت البيانات عبارة عن مصفوفة مباشرة
+          if (imageData.isNotEmpty) {
+            return imageData[0].toString().trim();
+          }
+        }
+      } else {
+        // التعامل مع الصور المفصولة بفاصلة
+        List<String> imagesList = itemsImage.split(',');
+        if (imagesList.isNotEmpty) {
+          return imagesList[0].trim();
+        }
+      }
+      return '';
+    } catch (e) {
+      print('Error parsing image data: $e');
+      // في حالة فشل تحليل JSON، إرجاع النص كما هو
+      if (itemsImage.contains(',')) {
+        return itemsImage.split(',')[0].trim();
+      }
+      return itemsImage.trim();
+    }
+  }
+
   static bool hasDiscount(ItemsModel item) {
     if (item.itemsDiscount == null) return false;
-
     int discount;
     if (item.itemsDiscount is String) {
       discount = int.tryParse(item.itemsDiscount.toString()) ?? 0;
     } else {
       discount = item.itemsDiscount as int? ?? 0;
     }
-
     return discount > 0;
   }
 
@@ -509,14 +556,12 @@ class ProductUtils {
     if (item.itemsActive != null && item.itemsActive == "1") {
       return true;
     }
-
     double price = double.tryParse(getFinalPrice(item).replaceAll(',', '')) ?? 0;
     return price >= 200;
   }
 
   static int getDiscountValue(ItemsModel item) {
     if (item.itemsDiscount == null) return 0;
-
     if (item.itemsDiscount is String) {
       return int.tryParse(item.itemsDiscount.toString()) ?? 0;
     } else {
@@ -526,7 +571,6 @@ class ProductUtils {
 
   static String getOriginalPrice(ItemsModel item) {
     if (item.itemsPrice == null) return "0";
-
     double price;
     if (item.itemsPrice is String) {
       price = double.tryParse(item.itemsPrice.toString()) ?? 0.0;
@@ -535,13 +579,25 @@ class ProductUtils {
     } else {
       price = item.itemsPrice as double? ?? 0.0;
     }
-
     return formatter.format(price);
   }
 
   static String getFinalPrice(ItemsModel item) {
-    double originalPrice = 0.0;
+    // إذا كان هناك خصم، استخدم itemsPriceDiscount
+    if (hasDiscount(item) && item.itemsPriceDiscount != null) {
+      double discountPrice;
+      if (item.itemsPriceDiscount is String) {
+        discountPrice = double.tryParse(item.itemsPriceDiscount.toString()) ?? 0.0;
+      } else if (item.itemsPriceDiscount is int) {
+        discountPrice = (item.itemsPriceDiscount as int).toDouble();
+      } else {
+        discountPrice = item.itemsPriceDiscount as double? ?? 0.0;
+      }
+      return formatter.format(discountPrice);
+    }
 
+    // إذا لم يكن هناك خصم، استخدم السعر الأصلي
+    double originalPrice = 0.0;
     if (item.itemsPrice != null) {
       if (item.itemsPrice is String) {
         originalPrice = double.tryParse(item.itemsPrice.toString()) ?? 0.0;
@@ -551,36 +607,31 @@ class ProductUtils {
         originalPrice = item.itemsPrice as double? ?? 0.0;
       }
     }
-
-    if (hasDiscount(item)) {
-      int discountPercentage = getDiscountValue(item);
-      double discountAmount = originalPrice * (discountPercentage / 100);
-      double finalPrice = originalPrice - discountAmount;
-      return formatter.format(finalPrice);
-    }
-
     return formatter.format(originalPrice);
   }
 
   static double getItemPrice(ItemsModel item) {
-    double originalPrice = 0.0;
-
-    if (item.itemsPrice != null) {
-      if (item.itemsPrice is String) {
-        originalPrice = double.tryParse(item.itemsPrice.toString()) ?? 0.0;
-      } else if (item.itemsPrice is int) {
-        originalPrice = (item.itemsPrice as int).toDouble();
+    // إذا كان هناك خصم، استخدم itemsPriceDiscount
+    if (hasDiscount(item) && item.itemsPriceDiscount != null) {
+      if (item.itemsPriceDiscount is String) {
+        return double.tryParse(item.itemsPriceDiscount.toString()) ?? 0.0;
+      } else if (item.itemsPriceDiscount is int) {
+        return (item.itemsPriceDiscount as int).toDouble();
       } else {
-        originalPrice = item.itemsPrice as double? ?? 0.0;
+        return item.itemsPriceDiscount as double? ?? 0.0;
       }
     }
 
-    if (hasDiscount(item)) {
-      int discountPercentage = getDiscountValue(item);
-      double discountAmount = originalPrice * (discountPercentage / 100);
-      return originalPrice - discountAmount;
+    // إذا لم يكن هناك خصم، استخدم السعر الأصلي
+    if (item.itemsPrice != null) {
+      if (item.itemsPrice is String) {
+        return double.tryParse(item.itemsPrice.toString()) ?? 0.0;
+      } else if (item.itemsPrice is int) {
+        return (item.itemsPrice as int).toDouble();
+      } else {
+        return item.itemsPrice as double? ?? 0.0;
+      }
     }
-
-    return originalPrice;
+    return 0.0;
   }
 }

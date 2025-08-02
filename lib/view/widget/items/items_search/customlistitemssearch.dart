@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../../controller/home_controller.dart';
 import '../../../../data/model/itemsmodel.dart';
+import '../../../../core/class/statusrequest.dart';
+import '../../../../core/constant/color.dart';
 import 'list_items_components.dart';
 
 class ListItemsSearch extends StatefulWidget {
@@ -11,10 +13,10 @@ class ListItemsSearch extends StatefulWidget {
   final bool animation;
 
   const ListItemsSearch({
-    Key? key,
+    super.key,
     required this.listdatamodel,
     required this.animation,
-  }) : super(key: key);
+  });
 
   @override
   State<ListItemsSearch> createState() => _ListItemsSearchState();
@@ -24,75 +26,77 @@ class _ListItemsSearchState extends State<ListItemsSearch> {
   // خيارات العرض
   int _viewType = 2; // 1: قائمة، 2: شبكة بعمودين
 
-  // خيارات الترتيب
-  String _sortOption = 'السعر: من الأقل للأعلى';
-
-  // خيارات الفلترة
-  bool _showFreeDeliveryOnly = false;
-  bool _showDiscountOnly = false;
-  RangeValues _priceRange = const RangeValues(0, 2000);
-
-  // قائمة مؤقتة للبيانات المعروضة
-  late List<ItemsModel> _filteredItems;
-
-  // متحكم النص للبحث
+  // متحكم النص للبحث المحلي
   final TextEditingController _searchController = TextEditingController();
+
+  // متحكم التمرير لمراقبة الوصول إلى النهاية
+  late ScrollController _scrollController;
+
+  // متغير لحفظ آخر نص بحث
+  String _lastSearchText = '';
 
   @override
   void initState() {
     super.initState();
-    _filteredItems = List.from(widget.listdatamodel);
-    _searchController.addListener(_searchItems);
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+
+    // تحديث النص من الكونترولر عند بداية التشغيل
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncSearchTextFromController();
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  void _searchItems() {
-    _applyFilters();
-  }
-
-  void _applyFilters() {
-    setState(() {
-      _filteredItems = widget.listdatamodel
-          .where((item) {
-        final price = ProductUtils.getItemPrice(item);
-        bool matchesPrice = price >= _priceRange.start && price <= _priceRange.end;
-        bool matchesFreeDelivery = _showFreeDeliveryOnly ? ProductUtils.hasFreeDelivery(item) : true;
-        bool matchesDiscount = _showDiscountOnly ? ProductUtils.hasDiscount(item) : true;
-
-        bool matchesSearch = true;
-        final searchQuery = _searchController.text.trim().toLowerCase();
-        if (searchQuery.isNotEmpty) {
-          final itemName = (item.itemsName ?? '').toLowerCase();
-          final categoryName = (item.categoriesName ?? '').toLowerCase();
-          matchesSearch = itemName.contains(searchQuery) || categoryName.contains(searchQuery);
+  // مزامنة النص من الكونترولر
+  void _syncSearchTextFromController() {
+    try {
+      final controller = Get.find<HomeControllerImp>();
+      if (controller.currentLocalSearch != _lastSearchText) {
+        _lastSearchText = controller.currentLocalSearch;
+        if (_searchController.text != _lastSearchText) {
+          _searchController.text = _lastSearchText;
         }
-
-        return matchesPrice && matchesFreeDelivery && matchesDiscount && matchesSearch;
-      })
-          .toList();
-
-      _sortItems();
-    });
+      }
+    } catch (e) {
+      print('Error syncing search text: $e');
+    }
   }
 
-  void _sortItems() {
-    switch (_sortOption) {
-      case 'السعر: من الأقل للأعلى':
-        _filteredItems.sort((a, b) => ProductUtils.getItemPrice(a).compareTo(ProductUtils.getItemPrice(b)));
-        break;
-      case 'السعر: من الأعلى للأقل':
-        _filteredItems.sort((a, b) => ProductUtils.getItemPrice(b).compareTo(ProductUtils.getItemPrice(a)));
-        break;
-      case 'الخصم: من الأعلى للأقل':
-        _filteredItems.sort((a, b) => ProductUtils.getDiscountValue(b).compareTo(ProductUtils.getDiscountValue(a)));
-        break;
-      case 'الأحدث أولاً':
-        break;
+  // مراقبة التمرير لتحميل المزيد
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreSearchResults();
+    }
+  }
+
+  // تحميل المزيد من نتائج البحث
+  void _loadMoreSearchResults() {
+    try {
+      final controller = Get.find<HomeControllerImp>();
+      controller.loadMoreSearchResults();
+    } catch (e) {
+      print('Error loading more search results: $e');
+    }
+  }
+
+  // تطبيق البحث عبر الباك إند - مع الاحتفاظ بالنص
+  void _applyBackendSearch(String searchQuery) {
+    final controller = Get.find<HomeControllerImp>();
+    _lastSearchText = searchQuery;
+    controller.updateFilters(localSearch: searchQuery);
+
+    // التأكد من أن النص محفوظ في الحقل
+    if (_searchController.text != searchQuery) {
+      setState(() {
+        _searchController.text = searchQuery;
+      });
     }
   }
 
@@ -112,99 +116,146 @@ class _ListItemsSearchState extends State<ListItemsSearch> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.listdatamodel.isEmpty) {
-      return ProductListComponents.buildEmptyState(context);
+    return GetBuilder<HomeControllerImp>(
+      builder: (controller) {
+        // مزامنة النص عند كل إعادة بناء
+        _syncSearchTextFromController();
+
+        if (widget.listdatamodel.isEmpty && !controller.isSearchLoadingMore) {
+          return ProductListComponents.buildEmptyState(context);
+        }
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ProductListComponents.buildSearchAndFilterBar(
+              context,
+              searchController: _searchController,
+              showDiscountOnly: controller.currentShowDiscountOnly,
+              showFreeDeliveryOnly: controller.currentShowFreeDeliveryOnly,
+              viewType: _viewType,
+              onSearchClear: () {
+                setState(() {
+                  _searchController.clear();
+                  _lastSearchText = '';
+                });
+                _applyBackendSearch('');
+              },
+              onViewTypeChanged: (type) => setState(() {
+                _viewType = type;
+              }),
+              onDiscountFilterChanged: (value) {
+                controller.updateFilters(showDiscountOnly: value);
+              },
+              onFreeDeliveryFilterChanged: (value) {
+                controller.updateFilters(showFreeDeliveryOnly: value);
+              },
+              onSortPressed: () => ProductListComponents.showSortBottomSheet(
+                context,
+                currentSort: controller.currentSortOption,
+                onSortSelected: (option) {
+                  controller.updateFilters(sortOption: option);
+                },
+              ),
+              onLocalSearch: _applyBackendSearch,
+            ),
+            if (_hasActiveFilters(controller))
+              ProductListComponents.buildFilterStatus(
+                context,
+                filteredCount: widget.listdatamodel.length,
+                totalCount: widget.listdatamodel.length,
+                onReset: () {
+                  setState(() {
+                    _searchController.clear();
+                    _lastSearchText = '';
+                  });
+                  controller.resetFilters();
+                },
+              ),
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: _buildProductsViewWithPagination(controller),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  bool _hasActiveFilters(HomeControllerImp controller) =>
+      _searchController.text.isNotEmpty ||
+          controller.currentShowFreeDeliveryOnly ||
+          controller.currentShowDiscountOnly ||
+          controller.currentPriceMin > 0 ||
+          controller.currentPriceMax < 2000 ||
+          controller.currentSortOption != 'الأحدث أولاً';
+
+  Widget _buildProductsViewWithPagination(HomeControllerImp controller) {
+    if (widget.listdatamodel.isEmpty && !controller.isSearchLoadingMore) {
+      return ProductListComponents.buildNoResultsFound();
     }
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        ProductListComponents.buildSearchAndFilterBar(
-          context,
-          searchController: _searchController,
-          showDiscountOnly: _showDiscountOnly,
-          showFreeDeliveryOnly: _showFreeDeliveryOnly,
-          viewType: _viewType,
-          onSearchClear: () {
-            _searchController.clear();
-            _applyFilters();
-          },
-          onViewTypeChanged: (type) => setState(() {
-            _viewType = type;
-          }),
-          onDiscountFilterChanged: (value) {
-            setState(() {
-              _showDiscountOnly = value;
-              _applyFilters();
-            });
-          },
-          onFreeDeliveryFilterChanged: (value) {
-            setState(() {
-              _showFreeDeliveryOnly = value;
-              _applyFilters();
-            });
-          },
-          onSortPressed: () => ProductListComponents.showSortBottomSheet(
-            context,
-            currentSort: _sortOption,
-            onSortSelected: (option) {
-              setState(() {
-                _sortOption = option;
-                _applyFilters();
-              });
-            },
-          ),
+        Flexible(
+          child: _buildProductsView(),
         ),
-
-        if (_hasActiveFilters)
-          ProductListComponents.buildFilterStatus(
-            context,
-            filteredCount: _filteredItems.length,
-            totalCount: widget.listdatamodel.length,
-            onReset: _resetFilters,
-          ),
-
-        _buildProductsView(),
+        _buildSearchLoadMoreIndicator(controller),
       ],
     );
   }
 
-  bool get _hasActiveFilters =>
-      _searchController.text.isNotEmpty ||
-          _showFreeDeliveryOnly ||
-          _showDiscountOnly ||
-          _priceRange.start > 0 ||
-          _priceRange.end < 2000;
-
-  void _resetFilters() {
-    setState(() {
-      _searchController.clear();
-      _showFreeDeliveryOnly = false;
-      _showDiscountOnly = false;
-      _priceRange = const RangeValues(0, 2000);
-      _sortOption = 'السعر: من الأقل للأعلى';
-      _filteredItems = List.from(widget.listdatamodel);
-    });
-  }
-
   Widget _buildProductsView() {
-    if (_filteredItems.isEmpty) {
-      return ProductListComponents.buildNoResultsFound();
-    }
-
     switch (_viewType) {
       case 1:
-        return ProductListComponents.buildListView(
-          items: _filteredItems,
-          animation: widget.animation,
-          onTap: _handleProductTap,
+        return SingleChildScrollView(
+          controller: _scrollController,
+          child: ProductListComponents.buildListView(
+            items: widget.listdatamodel,
+            animation: widget.animation,
+            onTap: _handleProductTap,
+          ),
         );
       case 2:
       default:
-        return ProductListComponents.buildGridView(
-          items: _filteredItems,
-          animation: widget.animation,
-          onTap: _handleProductTap,
+        return SingleChildScrollView(
+          controller: _scrollController,
+          child: ProductListComponents.buildGridView(
+            items: widget.listdatamodel,
+            animation: widget.animation,
+            onTap: _handleProductTap,
+          ),
         );
     }
+  }
+
+  Widget _buildSearchLoadMoreIndicator(HomeControllerImp controller) {
+    if (controller.isSearchLoadingMore) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 15),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColor.primaryColor),
+                strokeWidth: 2,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'جاري تحميل المزيد من النتائج...'.tr,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }

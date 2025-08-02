@@ -25,7 +25,7 @@ class AddressView extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            'العناوين',
+            'العناوين'.tr,
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           centerTitle: true,
@@ -46,7 +46,7 @@ class AddressView extends StatelessWidget {
           onPressed: () => Get.toNamed(AppRoute.addressadddetails, arguments: Get.arguments),
           backgroundColor: AppColor.primaryColor,
           icon: Icon(MdiIcons.mapMarkerPlusOutline),
-          label: Text('إضافة عنوان جديد'),
+          label: Text('إضافة عنوان جديد'.tr),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),
           ),
@@ -84,7 +84,7 @@ class AddressView extends StatelessWidget {
           Icon(MdiIcons.mapMarkerOutline, color: AppColor.primaryColor),
           SizedBox(width: 10),
           Text(
-            'عناوين التوصيل الخاصة بك',
+            'عناوين التوصيل الخاصة بك'.tr,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -117,19 +117,19 @@ class AddressView extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('حذف العنوان'),
-        content: Text('هل أنت متأكد من رغبتك في حذف هذا العنوان؟'),
+        title: Text('حذف العنوان'.tr),
+        content: Text('هل أنت متأكد من رغبتك في حذف هذا العنوان؟'.tr),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('إلغاء'),
+            child: Text('إلغاء'.tr),
           ),
           TextButton(
             onPressed: () {
               controller.deleteAddress(controller.data[index].addressId!);
               Navigator.pop(context);
             },
-            child: Text('حذف', style: TextStyle(color: Colors.red)),
+            child: Text('حذف'.tr, style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -232,16 +232,16 @@ class AddressCard extends StatelessWidget {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('تأكيد الحذف'),
-        content: Text('هل أنت متأكد من رغبتك في حذف هذا العنوان؟'),
+        title: Text('تأكيد الحذف'.tr),
+        content: Text('هل أنت متأكد من رغبتك في حذف هذا العنوان؟'.tr),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('تراجع'),
+            child: Text('تراجع'.tr),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('حذف', style: TextStyle(color: Colors.red)),
+            child: Text('حذف'.tr, style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

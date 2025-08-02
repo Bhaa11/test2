@@ -34,7 +34,7 @@ class ProductBadges {
             "${discount.toInt()}%",
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 9,
+              fontSize: 11,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -76,7 +76,7 @@ class ProductBadges {
             "مجاني",
             style: TextStyle(
               color: Colors.white,
-              fontSize: 7,
+              fontSize: 8,
               fontWeight: FontWeight.bold,
             ),
           ),

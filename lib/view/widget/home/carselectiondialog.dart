@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import '../../../core/constant/color.dart';
 
 class CarSelectionDialog extends StatefulWidget {
@@ -115,7 +116,6 @@ class _CarSelectionDialogState extends State<CarSelectionDialog>
                 child: Column(
                   children: [
                     const SizedBox(height: 16),
-                    _buildSelectionSteps(),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
                       child: Column(
@@ -202,20 +202,11 @@ class _CarSelectionDialogState extends State<CarSelectionDialog>
               ),
               const SizedBox(height: 14),
               Text(
-                'حدد نوع سيارتك',
+                'حدد نوع سيارتك'.tr,
                 style: const TextStyle(
-                  fontSize: 24,
+                  fontSize: 25,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'سنعرض لك جميع قطع الغيار المتوافقة',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withOpacity(0.9),
                 ),
               ),
             ],
@@ -225,84 +216,7 @@ class _CarSelectionDialogState extends State<CarSelectionDialog>
     );
   }
 
-  Widget _buildSelectionSteps() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Row(
-        children: [
-          _buildStepIndicator(
-              1,
-              'الشركة',
-              selectedCompany != null,
-              isActive: true
-          ),
-          _buildStepConnector(selectedCompany != null),
-          _buildStepIndicator(
-              2,
-              'الموديل',
-              selectedModel != null,
-              isActive: selectedCompany != null
-          ),
-          _buildStepConnector(selectedModel != null),
-          _buildStepIndicator(
-              3,
-              'السنة',
-              selectedYear != null,
-              isActive: selectedModel != null
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildStepIndicator(int step, String label, bool isCompleted, {bool isActive = false}) {
-    return Expanded(
-      child: Column(
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: isCompleted
-                  ? AppColor.primaryColor
-                  : isActive
-                  ? AppColor.primaryColor.withOpacity(0.1)
-                  : Colors.grey.shade200,
-              shape: BoxShape.circle,
-              border: isActive && !isCompleted
-                  ? Border.all(color: AppColor.primaryColor, width: 2)
-                  : null,
-            ),
-            child: Center(
-              child: isCompleted
-                  ? const Icon(Icons.check, color: Colors.white, size: 18)
-                  : Text(
-                '$step',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: isActive && !isCompleted
-                      ? AppColor.primaryColor
-                      : isActive
-                      ? Colors.grey.shade800
-                      : Colors.grey.shade400,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: isActive || isCompleted ? FontWeight.bold : FontWeight.normal,
-              color: isActive || isCompleted ? AppColor.grey2 : Colors.grey.shade500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildStepConnector(bool isCompleted) {
     return Container(
@@ -318,9 +232,9 @@ class _CarSelectionDialogState extends State<CarSelectionDialog>
       children: [
         _buildSelector(
           icon: Icons.business_rounded,
-          title: 'الشركة المصنعة',
+          title: 'الشركة المصنعة'.tr,
           value: selectedCompany,
-          hint: 'اختر الشركة المصنعة',
+          hint: 'اختر الشركة المصنعة'.tr,
           items: widget.carData.keys.toList(),
           onSelected: (value) {
             setState(() {
@@ -334,9 +248,9 @@ class _CarSelectionDialogState extends State<CarSelectionDialog>
         const SizedBox(height: 16),
         _buildSelector(
           icon: Icons.directions_car_filled,
-          title: 'موديل السيارة',
+          title: 'موديل السيارة'.tr,
           value: selectedModel,
-          hint: 'اختر الموديل',
+          hint: 'اختر الموديل'.tr,
           items: selectedCompany != null ? widget.carData[selectedCompany]!.keys.toList() : [],
           onSelected: (value) {
             setState(() {
@@ -349,9 +263,9 @@ class _CarSelectionDialogState extends State<CarSelectionDialog>
         const SizedBox(height: 16),
         _buildSelector(
           icon: Icons.calendar_today_rounded,
-          title: 'سنة الصنع',
+          title: 'سنة الصنع'.tr,
           value: selectedYear,
-          hint: 'اختر سنة الصنع',
+          hint: 'اختر سنة الصنع'.tr,
           items: selectedModel != null
               ? widget.carData[selectedCompany]![selectedModel]!
               : [],
@@ -511,7 +425,7 @@ class _CarSelectionDialogState extends State<CarSelectionDialog>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'تأكيد الاختيار',
+                  'تأكيد الاختيار'.tr,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -559,11 +473,11 @@ class _SelectionSheet extends StatefulWidget {
   final String? selected;
 
   const _SelectionSheet({
-    Key? key,
+    super.key,
     required this.title,
     required this.items,
     this.selected,
-  }) : super(key: key);
+  });
 
   @override
   _SelectionSheetState createState() => _SelectionSheetState();
@@ -623,59 +537,7 @@ class _SelectionSheetState extends State<_SelectionSheet> with SingleTickerProvi
         child: Column(
           children: [
             // Header Section
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColor.primaryColor.withOpacity(0.9),
-                    AppColor.secondColor.withOpacity(0.9)
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(28),
-                  topRight: Radius.circular(28),
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              child: Column(
-                children: [
-                  // Handle bar
-                  Center(
-                    child: Container(
-                      width: 50,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(2.5),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white, size: 24),
-                        onPressed: () {
-                          _animController.reverse().then((_) => Navigator.pop(context));
-                        },
-                      ),
-                      Text(
-                        "اختر ${widget.title}",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 40),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+
 
             // Search Box
             Padding(
@@ -698,9 +560,9 @@ class _SelectionSheetState extends State<_SelectionSheet> with SingleTickerProvi
                   focusNode: _focusNode,
                   autofocus: false,
                   textAlign: TextAlign.right,
-                  style: const TextStyle(fontSize: 16),
+                  style: const TextStyle(fontSize: 18),
                   decoration: InputDecoration(
-                    hintText: 'ابحث عن ${widget.title}...',
+                    hintText: '${'ابحث عن'.tr} ${widget.title}...',
                     prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 22),
                     suffixIcon: query.isNotEmpty
                         ? IconButton(
@@ -740,7 +602,7 @@ class _SelectionSheetState extends State<_SelectionSheet> with SingleTickerProvi
                     Icon(Icons.search_off, size: 54, color: Colors.grey.shade300),
                     const SizedBox(height: 12),
                     Text(
-                      'لا توجد نتائج للبحث',
+                      'لا توجد نتائج للبحث'.tr,
                       style: TextStyle(
                         color: Colors.grey.shade500,
                         fontSize: 16,
@@ -749,7 +611,7 @@ class _SelectionSheetState extends State<_SelectionSheet> with SingleTickerProvi
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'جرب كلمات بحث أخرى',
+                      'جرب كلمات بحث أخرى'.tr,
                       style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                     ),
                   ],
@@ -800,7 +662,7 @@ class _SelectionSheetState extends State<_SelectionSheet> with SingleTickerProvi
                                   item,
                                   textAlign: TextAlign.right,
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 22,
                                     fontWeight: isSelected
                                         ? FontWeight.bold
                                         : FontWeight.normal,

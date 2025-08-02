@@ -83,7 +83,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          "طلب #${listdata.ordersId}",
+          "طلب #".tr + "${listdata.ordersId}",
           style: TextStyle(
             fontSize: screenWidth * 0.05,
             fontWeight: FontWeight.w800,
@@ -213,7 +213,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "معلومات العميل",
+                      "معلومات العميل".tr,
                       style: TextStyle(
                         fontSize: screenWidth * 0.038,
                         fontWeight: FontWeight.w700,
@@ -232,7 +232,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
                         Expanded(
                           child: Text(
                             [
-                              listdata.addressName ?? "غير محدد",
+                              listdata.addressName ?? "غير محدد".tr,
                               if (listdata.addressCity != null && listdata.addressStreet!.isNotEmpty)
                                 listdata.addressCity!,
                               if (listdata.addressStreet != null && listdata.addressCity!.isNotEmpty)
@@ -259,7 +259,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            listdata.usersPhone ?? "غير محدد",
+                            listdata.usersPhone ?? "غير محدد".tr,
                             style: TextStyle(
                               fontSize: screenWidth * 0.038,
                               fontWeight: FontWeight.w600,
@@ -279,9 +279,36 @@ class CardOrdersList extends GetView<OrdersPendingController> {
     );
   }
 
+  Map<String, int> _getItemQuantities() {
+    Map<String, int> quantities = {};
+    if (listdata.items != null) {
+      for (var item in listdata.items!) {
+        String itemId = item.itemsId ?? '';
+        if (itemId.isNotEmpty) {
+          quantities[itemId] = (quantities[itemId] ?? 0) + 1;
+        }
+      }
+    }
+    return quantities;
+  }
+
+  List<OrderItemData> _getUniqueItems() {
+    Map<String, OrderItemData> uniqueItems = {};
+    if (listdata.items != null) {
+      for (var item in listdata.items!) {
+        String itemId = item.itemsId ?? '';
+        if (itemId.isNotEmpty && !uniqueItems.containsKey(itemId)) {
+          uniqueItems[itemId] = item;
+        }
+      }
+    }
+    return uniqueItems.values.toList();
+  }
+
   Widget _buildProductsSection(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final displayItems = listdata.items!.length > 3 ? listdata.items!.sublist(0, 3) : listdata.items!;
+    final uniqueItems = _getUniqueItems();
+    final displayItems = uniqueItems.length > 3 ? uniqueItems.sublist(0, 3) : uniqueItems;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,18 +317,18 @@ class CardOrdersList extends GetView<OrdersPendingController> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "المنتجات (${listdata.items!.length})",
+              "المنتجات".tr + " (${uniqueItems.length}) ",
               style: TextStyle(
                 fontSize: screenWidth * 0.042,
                 fontWeight: FontWeight.w800,
                 color: Colors.black87,
               ),
             ),
-            if (listdata.items!.length > 3)
+            if (uniqueItems.length > 3)
               InkWell(
                 onTap: () => _showAllProducts(context),
                 child: Text(
-                  "عرض الكل",
+                  "عرض الكل".tr,
                   style: TextStyle(
                     fontSize: screenWidth * 0.035,
                     color: AppColor.primaryColor,
@@ -321,10 +348,10 @@ class CardOrdersList extends GetView<OrdersPendingController> {
             mainAxisSpacing: screenWidth * 0.03,
             childAspectRatio: 0.8,
           ),
-          itemCount: displayItems.length + (listdata.items!.length > 3 ? 1 : 0),
+          itemCount: displayItems.length + (uniqueItems.length > 3 ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == displayItems.length) {
-              return _buildMoreItemsButton(context);
+              return _buildMoreItemsButton(context, uniqueItems.length);
             }
             return _buildProductItem(context, displayItems[index]);
           },
@@ -336,7 +363,8 @@ class CardOrdersList extends GetView<OrdersPendingController> {
   Widget _buildProductItem(BuildContext context, OrderItemData item) {
     final screenWidth = MediaQuery.of(context).size.width;
     String imageUrl = _getImageUrl(item);
-    int itemCount = int.tryParse(item.itemsCount?.toString() ?? '1') ?? 1;
+    final quantities = _getItemQuantities();
+    int itemQuantity = quantities[item.itemsId] ?? 1;
 
     return GestureDetector(
       onTap: () {
@@ -404,7 +432,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
                 Padding(
                   padding: EdgeInsets.all(8),
                   child: Text(
-                    item.itemsName ?? "منتج",
+                    item.itemsName ?? "منتج".tr,
                     style: TextStyle(
                       fontSize: screenWidth * 0.032,
                       fontWeight: FontWeight.w600,
@@ -415,7 +443,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
                 ),
               ],
             ),
-            if (itemCount > 1)
+            if (itemQuantity > 1)
               Positioned(
                 top: 8,
                 left: 8,
@@ -426,7 +454,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    "×$itemCount",
+                    "×$itemQuantity",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: screenWidth * 0.028,
@@ -441,9 +469,9 @@ class CardOrdersList extends GetView<OrdersPendingController> {
     );
   }
 
-  Widget _buildMoreItemsButton(BuildContext context) {
+  Widget _buildMoreItemsButton(BuildContext context, int totalItems) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final extraItems = listdata.items!.length - 3;
+    final extraItems = totalItems - 3;
 
     return GestureDetector(
       onTap: () => _showAllProducts(context),
@@ -470,7 +498,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
             ),
             SizedBox(height: 8),
             Text(
-              "+$extraItems أخرى",
+              "أخرى".tr + " +$extraItems",
               style: TextStyle(
                 fontSize: screenWidth * 0.032,
                 fontWeight: FontWeight.w700,
@@ -486,6 +514,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
   void _showAllProducts(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+    final uniqueItems = _getUniqueItems();
 
     showModalBottomSheet(
       context: context,
@@ -526,7 +555,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "المنتجات (${listdata.items!.length})",
+                    "المنتجات".tr + " (${uniqueItems.length})",
                     style: TextStyle(
                       fontSize: screenWidth * 0.05,
                       fontWeight: FontWeight.w800,
@@ -542,11 +571,11 @@ class CardOrdersList extends GetView<OrdersPendingController> {
             Expanded(
               child: ListView.separated(
                 padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-                itemCount: listdata.items!.length,
+                itemCount: uniqueItems.length,
                 separatorBuilder: (context, index) => SizedBox(height: 15),
                 itemBuilder: (context, index) {
-                  final item = listdata.items![index];
-                  return GestureDetector(  // <-- Added GestureDetector here to fix the tap issue
+                  final item = uniqueItems[index];
+                  return GestureDetector(
                     onTap: () {
                       if (item.itemDetails != null) {
                         Get.toNamed(
@@ -570,7 +599,8 @@ class CardOrdersList extends GetView<OrdersPendingController> {
   Widget _buildProductListItem(BuildContext context, OrderItemData item) {
     final screenWidth = MediaQuery.of(context).size.width;
     String imageUrl = _getImageUrl(item);
-    int itemCount = int.tryParse(item.itemsCount?.toString() ?? '1') ?? 1;
+    final quantities = _getItemQuantities();
+    int itemQuantity = quantities[item.itemsId] ?? 1;
     double price = double.tryParse(item.itemsPriceDiscount ?? '0') ?? 0;
 
     return Container(
@@ -624,7 +654,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.itemsName ?? "منتج غير محدد",
+                  item.itemsName ?? "منتج غير محدد".tr,
                   style: TextStyle(
                     fontSize: screenWidth * 0.042,
                     fontWeight: FontWeight.w700,
@@ -634,7 +664,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
                 ),
                 SizedBox(height: 5),
                 Text(
-                  "الكمية: $itemCount",
+                  "الكمية:".tr + " $itemQuantity",
                   style: TextStyle(
                     fontSize: screenWidth * 0.036,
                     color: Colors.grey[600],
@@ -645,7 +675,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
           ),
           SizedBox(width: 10),
           Text(
-            "${price.toStringAsFixed(2)} د.ع",
+            "${price.toStringAsFixed(2)} " + "د.ع".tr,
             style: TextStyle(
               fontSize: screenWidth * 0.038,
               fontWeight: FontWeight.w800,
@@ -675,9 +705,9 @@ class CardOrdersList extends GetView<OrdersPendingController> {
       ),
       child: Column(
         children: [
-          _buildSummaryRow(context, "سعر المنتجات", "${subtotal.toStringAsFixed(2)} د.ع"),
+          _buildSummaryRow(context, "سعر المنتجات".tr, "${subtotal.toStringAsFixed(2)} " + "د.ع".tr),
           SizedBox(height: 8),
-          _buildSummaryRow(context, "رسوم التوصيل", "${deliveryFee.toStringAsFixed(2)} د.ع"),
+          _buildSummaryRow(context, "رسوم التوصيل".tr, "${deliveryFee.toStringAsFixed(2)} " + "د.ع".tr),
           SizedBox(height: 12),
           Container(
             height: 1,
@@ -688,7 +718,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "المبلغ الإجمالي",
+                "المبلغ الإجمالي".tr,
                 style: TextStyle(
                   fontSize: screenWidth * 0.04,
                   fontWeight: FontWeight.w700,
@@ -696,7 +726,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
                 ),
               ),
               Text(
-                "${total.toStringAsFixed(2)} د.ع",
+                "${total.toStringAsFixed(2)}" + "د.ع".tr,
                 style: TextStyle(
                   fontSize: screenWidth * 0.045,
                   fontWeight: FontWeight.w800,
@@ -754,7 +784,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
           shadowColor: Colors.transparent,
         ),
         child: Text(
-          "إلغاء الطلب",
+          "إلغاء الطلب".tr,
           style: TextStyle(
             fontSize: screenWidth * 0.04,
             fontWeight: FontWeight.w700,
@@ -798,7 +828,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
               ),
               SizedBox(height: 20),
               Text(
-                "إلغاء الطلب",
+                "إلغاء الطلب".tr,
                 style: TextStyle(
                   fontSize: screenWidth * 0.055,
                   fontWeight: FontWeight.w800,
@@ -807,7 +837,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
               ),
               SizedBox(height: 15),
               Text(
-                "هل أنت متأكد من رغبتك في إلغاء هذا الطلب؟ لا يمكن التراجع عن هذا الإجراء.",
+                "هل أنت متأكد من رغبتك في إلغاء هذا الطلب؟ لا يمكن التراجع عن هذا الإجراء.".tr,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: screenWidth * 0.038,
@@ -829,7 +859,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
                         ),
                       ),
                       child: Text(
-                        "تراجع",
+                        "تراجع".tr,
                         style: TextStyle(
                           fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.w700,
@@ -853,7 +883,7 @@ class CardOrdersList extends GetView<OrdersPendingController> {
                         ),
                       ),
                       child: Text(
-                        "نعم، ألغِ الطلب",
+                        "نعم، ألغِ الطلب".tr,
                         style: TextStyle(
                           fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.w700,
@@ -875,36 +905,36 @@ class CardOrdersList extends GetView<OrdersPendingController> {
     switch (status) {
       case '0':
         return StatusData(
-          text: "قيد المراجعة",
-          description: "طلبك قيد المراجعة من قبل البائع",
+          text: "قيد المراجعة".tr,
+          description: "طلبك قيد المراجعة من قبل البائع".tr,
           color: Colors.orange,
           icon: Icons.access_time_rounded,
         );
       case '1':
         return StatusData(
-          text: "جاري التوصيل",
-          description: "طلبك في الطريق إليك الآن",
+          text: "جاري التوصيل".tr,
+          description: "طلبك في الطريق إليك الآن".tr,
           color: Colors.blue,
           icon: Icons.local_shipping_rounded,
         );
       case '2':
         return StatusData(
-          text: "مكتمل",
-          description: "تم توصيل طلبك بنجاح",
+          text: "مكتمل".tr,
+          description: "تم توصيل طلبك بنجاح".tr,
           color: Colors.green,
           icon: Icons.check_circle_rounded,
         );
       case '3':
         return StatusData(
-          text: "ملغي",
-          description: "تم إلغاء هذا الطلب",
+          text: "ملغي".tr,
+          description: "تم إلغاء هذا الطلب".tr,
           color: Colors.red,
           icon: Icons.cancel_rounded,
         );
       default:
         return StatusData(
-          text: "غير محدد",
-          description: "حالة الطلب غير معروفة",
+          text: "غير محدد".tr,
+          description: "حالة الطلب غير معروفة".tr,
           color: Colors.grey,
           icon: Icons.help_rounded,
         );

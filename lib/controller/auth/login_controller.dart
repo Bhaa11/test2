@@ -49,6 +49,7 @@ class LoginControllerImp extends LoginController {
             String userid = myServices.sharedPreferences.getString("id")!;
             myServices.sharedPreferences
                 .setString("username", response['data']['users_name']);
+            String username = myServices.sharedPreferences.getString("username")!;
             myServices.sharedPreferences
                 .setString("email", response['data']['users_email']);
             myServices.sharedPreferences
@@ -57,6 +58,7 @@ class LoginControllerImp extends LoginController {
 
             FirebaseMessaging.instance.subscribeToTopic("users");
             FirebaseMessaging.instance.subscribeToTopic("users${userid}");
+
 
             Get.offNamed(AppRoute.homepage);
           } else {

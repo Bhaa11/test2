@@ -1,20 +1,10 @@
+// lib/view/widget/customappbar.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../core/constant/color.dart';
 import '../../core/constant/routes.dart';
 import 'home/carselectiondialog.dart';
-
-/// ألوان المشروع
-class AppColor {
-  static const Color grey = Color(0xFF757575);
-  static const Color grey2 = Color(0xFF424242);
-  static const Color black = Color(0xff000000);
-  static const Color backgroundcolor = Color(0xFFFFF8E1);
-  static const Color primaryColor = Color(0xFFFFC107);
-  static const Color secondColor = Color(0xFFFFA000);
-  static const Color fourthColor = Color(0xFF0D47A1);
-  static const Color thirdColor = Color(0xFFFFECB3);
-  static const Color lightGrey = Color(0xFFF5F5F5);
-}
+import '../../controller/home_controller.dart'; // Ensure HomeController is imported
 
 /// شريط التطبيق المخصص مع تصميم عصري واستجابة عالية
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -24,6 +14,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final void Function(String)? onChanged;
   final TextEditingController mycontroller;
   final IconData iconData;
+  final Map<String, Map<String, List<String>>>? carData;
 
   const CustomAppBar({
     Key? key,
@@ -33,6 +24,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onChanged,
     required this.mycontroller,
     this.iconData = Icons.favorite_border_outlined,
+    this.carData,
   }) : super(key: key);
 
   @override
@@ -71,8 +63,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       controller: mycontroller,
                       onChanged: onChanged,
                       onFieldSubmitted: (value) {
-                        if (onPressedSearch != null) {
-                          onPressedSearch!();
+                        if (value.isNotEmpty) {
+                          // الذهاب إلى صفحة البحث مع تمرير نص البحث
+                          Get.toNamed(AppRoute.search, arguments: {'searchQuery': value});
                         }
                       },
                       decoration: InputDecoration(
@@ -80,70 +73,225 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                         border: InputBorder.none,
                         hintText: titleappbar,
                         hintStyle: const TextStyle(
-                          fontSize: 15,
-                          color: AppColor.grey,
-                          fontWeight: FontWeight.w400,
+                          fontSize: 16,
+                          color: AppColor.grey2,
+                          fontWeight: FontWeight.w600,
                         ),
                         prefixIcon: Padding(
                           padding: const EdgeInsets.only(left: 8, right: 12),
                           child: IconButton(
                             icon: const Icon(Icons.search_rounded, color: AppColor.primaryColor, size: 26),
                             onPressed: () async {
-                              // بيانات السيارات
-                              final carData = {
-                                'فورد': {
-                                  'موستنك': ['2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025'],
-                                  'إكسبلورر': ['2019', '2020', '2021', '2022', '2023'],
-                                  'إف-150': ['2018', '2019', '2020', '2021', '2022'],
-                                },
-                                'كيا': {
-                                  'سبورتاج': ['2020', '2021', '2022', '2023'],
-                                  'سيلتوس': ['2021', '2022', '2023'],
-                                  'سورينتو': ['2019', '2020', '2021', '2022'],
-                                },
-                                'تويوتا': {
-                                  'كامري': ['2018', '2019', '2020', '2021', '2022'],
-                                  'راف4': ['2019', '2020', '2021', '2022', '2023'],
-                                  'كورولا': ['2018', '2019', '2020', '2021', '2022'],
-                                },
-                                'هوندا': {
-                                  'أكورد': ['2018', '2019', '2020', '2021', '2022'],
-                                  'سيفيك': ['2019', '2020', '2021', '2022'],
-                                  'سي-آر-في': ['2018', '2019', '2020', '2021'],
-                                },
-                                'نيسان': {
-                                  'التيما': ['2018', '2019', '2020', '2021'],
-                                  'باثفايندر': ['2019', '2020', '2021', '2022'],
-                                  'إكس-تريل': ['2018', '2019', '2020', '2021'],
-                                },
-                                'شيفروليه': {
-                                  'كامارو': ['2018', '2019', '2020', '2021', '2022'],
-                                  'سيلفرادو': ['2019', '2020', '2021', '2022'],
-                                  'ماليبو': ['2018', '2019', '2020', '2021'],
-                                },
-                              };
+                              // الحصول على الكونترولر للتحقق من حالة البيانات
+                              final controller = Get.find<HomeControllerImp>();
 
+                              // التحقق من حالة تحميل البيانات
+                              if (!controller.carDataLoaded) {
+                                // إظهار مؤشر التحميل
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (BuildContext context) {
+                                    return Dialog(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      elevation: 8,
+                                      backgroundColor: Colors.white,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(30),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(20),
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              Colors.white,
+                                              AppColor.primaryColor.withOpacity(0.05),
+                                            ],
+                                          ),
+                                        ),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            // أيقونة السيارة مع تأثير دوراني
+                                            Stack(
+                                              alignment: Alignment.center,
+                                              children: [
+                                                Container(
+                                                  width: 80,
+                                                  height: 80,
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    color: AppColor.primaryColor.withOpacity(0.1),
+                                                  ),
+                                                ),
+                                                Container(
+                                                  width: 60,
+                                                  height: 60,
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    color: AppColor.primaryColor.withOpacity(0.2),
+                                                  ),
+                                                ),
+                                                Icon(
+                                                  Icons.directions_car_rounded,
+                                                  size: 35,
+                                                  color: AppColor.primaryColor,
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 25),
+                                            // مؤشر التحميل المخصص
+                                            SizedBox(
+                                              width: 40,
+                                              height: 40,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 3,
+                                                valueColor: AlwaysStoppedAnimation<Color>(AppColor.primaryColor),
+                                                backgroundColor: AppColor.primaryColor.withOpacity(0.2),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 25),
+                                            // النص الرئيسي
+                                            Text(
+                                              'جاري تحميل بيانات السيارات',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColor.black,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            // النص الفرعي
+                                            Text(
+                                              'يرجى الانتظار قليلاً...',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: AppColor.grey,
+                                                fontWeight: FontWeight.w400,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+
+                                // انتظار حتى يتم تحميل البيانات أو انتهاء المهلة الزمنية
+                                int waitTime = 0;
+                                while (!controller.carDataLoaded && waitTime < 10) {
+                                  await Future.delayed(Duration(seconds: 1));
+                                  waitTime++;
+                                }
+
+                                // إغلاق حوار التحميل
+                                Navigator.of(context).pop();
+
+                                // التحقق من نتيجة التحميل - استخدام controller.carData بدلاً من carData
+                                if (!controller.carDataLoaded || controller.carData.isEmpty) {
+                                  // إظهار رسالة خطأ
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.error_outline,
+                                            color: Colors.white,
+                                            size: 24,
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              'عذراً، بيانات السيارات غير متوفرة حالياً\nيرجى المحاولة لاحقاً أو التواصل مع الدعم الفني',
+                                              textAlign: TextAlign.right,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      duration: const Duration(seconds: 4),
+                                      behavior: SnackBarBehavior.floating,
+                                      backgroundColor: Colors.red.shade600,
+                                      margin: const EdgeInsets.all(10),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      action: SnackBarAction(
+                                        label: 'حسناً',
+                                        textColor: Colors.white,
+                                        onPressed: () {
+                                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+                              }
+
+                              // التحقق من أن البيانات متاحة وصحيحة - استخدام controller.carData
+                              if (controller.carData.isEmpty) {
+                                // إظهار رسالة خطأ للبيانات الفارغة أو الخاطئة
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.error_outline,
+                                          color: Colors.white,
+                                          size: 24,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            'عذراً، بيانات السيارات غير متوفرة حالياً\nيرجى المحاولة لاحقاً أو التواصل مع الدعم الفني',
+                                            textAlign: TextAlign.right,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    duration: const Duration(seconds: 4),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: Colors.red.shade600,
+                                    margin: const EdgeInsets.all(10),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    action: SnackBarAction(
+                                      label: 'حسناً',
+                                      textColor: Colors.white,
+                                      onPressed: () {
+                                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                      },
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              // إذا كانت البيانات متاحة، فتح حوار اختيار السيارة - استخدام controller.carData
                               final result = await CarSelectionDialog.show(
                                 context: context,
-                                carData: carData,
+                                carData: controller.carData,
                               );
 
                               if (result != null) {
                                 // تنسيق البحث بالصيغة المطلوبة: الشركة-الموديل-سنة الصنع
                                 final searchQuery = "${result['company']}-${result['model']}-${result['year']}";
 
-                                // تعيين نص البحث في حقل البحث
-                                mycontroller.text = searchQuery;
-
-                                // تشغيل دالة onChanged لتحديث واجهة المستخدم
-                                if (onChanged != null) {
-                                  onChanged!(searchQuery);
-                                }
-
-                                // تنفيذ البحث باستخدام المعلومات المختارة
-                                if (onPressedSearch != null) {
-                                  onPressedSearch!();
-                                }
+                                // الذهاب إلى صفحة البحث مع تمرير نص البحث
+                                Get.toNamed(AppRoute.search, arguments: {'searchQuery': searchQuery});
 
                                 // إظهار رسالة نجاح موجزة
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -186,12 +334,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             const SizedBox(width: 12),
 
             // زر الإشعارات المحسّن
-            _buildActionButton(
-              icon: Icons.notifications_outlined,
-              onPressed: () {
-                Get.toNamed(AppRoute.notificationview);
-              },
-              badgeCount: 3,  // يمكن إضافة عدد الإشعارات الجديدة ديناميكياً
+            GetBuilder<HomeControllerImp>(
+              builder: (controller) => _buildActionButton(
+                icon: Icons.notifications_outlined,
+                onPressed: () {
+                  Get.toNamed(AppRoute.notificationview);
+                },
+                badgeCount: controller.unreadNotificationCount,
+              ),
             ),
 
             const SizedBox(width: 12),
@@ -202,9 +352,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               onPressed: () {
                 Get.toNamed(AppRoute.cart);
               },
-              badgeCount: 2,  // يمكنك تغييره ديناميكياً حسب عدد العناصر في السلة
+              badgeCount: 2, // يمكنك تغييره ديناميكياً حسب عدد العناصر في السلة
             ),
-
           ],
         ),
       ),

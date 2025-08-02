@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../controller/orders/details_controller.dart';
 import '../../../core/class/handlingdataview.dart';
@@ -94,15 +93,6 @@ class OrdersDetails extends StatelessWidget {
                       EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                       height: 300,
                       width: double.infinity,
-                      child: GoogleMap(
-                        mapType: MapType.normal,
-                        markers: controller.markers.toSet(),
-                        initialCameraPosition: controller.cameraPosition!,
-                        onMapCreated: (GoogleMapController controllermap) {
-                          controller.completercontroller!
-                              .complete(controllermap);
-                        },
-                      ),
                     ),
                   )
                 ])))),

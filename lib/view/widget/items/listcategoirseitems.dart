@@ -1,11 +1,8 @@
-import 'package:ecommercecourse/controller/home_controller.dart';
 import 'package:ecommercecourse/controller/items_controller.dart';
 import 'package:ecommercecourse/core/constant/color.dart';
 import 'package:ecommercecourse/core/functions/translatefatabase.dart';
 import 'package:ecommercecourse/data/model/categoriesmodel.dart';
-import 'package:ecommercecourse/linkapi.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 class ListCategoriesItems extends GetView<ItemsControllerImp> {

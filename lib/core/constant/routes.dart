@@ -26,7 +26,7 @@ class AppRoute {
   static const String orderspending = "/orderspending";
   static const String ordersarchive = "/ordersarchive";
   static const String ordersdetails = "/ordersdetails";
-  static const String offers = "/offers";
+  static const String chatpage = "/chatpage";
   static const String ordersall = "/ordersall";
   static const String sidesettings = "/sidesettings";
   static const String addproduct = "/addproduct";
@@ -34,6 +34,7 @@ class AppRoute {
   static const String itemsview = "/itemsview";
   static const String itemsadd = "/itemsadd";
   static const String itemsedit = "/itemsedit";
+  static const String language = "/language";
 
 
 
@@ -51,6 +52,11 @@ class AppRoute {
   static const String mywallet = "/mywallet";
   static const String sellerratingsview = "/sellerratingsview";
   static const String sellersetails = "/sellersetails";
+  static const String phoneloginpage = "/phoneloginpage";
+  static const String search = "/search";
+
+
+
 
 
 

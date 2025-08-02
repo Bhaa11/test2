@@ -5,7 +5,7 @@ import 'package:ecommercecourse/core/class/handlingdataview.dart';
 import 'package:ecommercecourse/core/constant/color.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 
 class OrdersDetails extends StatelessWidget {
   const OrdersDetails({super.key});
@@ -131,14 +131,6 @@ class OrdersDetails extends StatelessWidget {
             padding: EdgeInsets.all(12),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: GoogleMap(
-                mapType: MapType.normal,
-                markers: controller.markers.toSet(),
-                initialCameraPosition: controller.cameraPosition!,
-                onMapCreated: (GoogleMapController controllermap) {
-                  controller.completercontroller!.complete(controllermap);
-                },
-              ),
             ),
           ),
         ),

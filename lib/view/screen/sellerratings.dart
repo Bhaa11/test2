@@ -1,4 +1,4 @@
-// view/screen/seller_ratings_view.dart
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ecommercecourse/core/class/statusrequest.dart';
@@ -173,7 +173,7 @@ class SellerRatingsView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "تقييمات البائع",
+          "تقييمات البائع".tr,
           style: TextStyle(color: AppColor.grey),
         ),
         iconTheme: IconThemeData(color: AppColor.grey),
@@ -221,7 +221,7 @@ class SellerRatingsView extends StatelessWidget {
           ],
         ),
         child: Text(
-          "لا توجد إحصائيات متاحة",
+          "لا توجد إحصائيات متاحة".tr,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 16,
@@ -250,7 +250,7 @@ class SellerRatingsView extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            "إحصائيات التقييمات",
+            "إحصائيات التقييمات".tr,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -284,7 +284,7 @@ class SellerRatingsView extends StatelessWidget {
                     }),
                   ),
                   Text(
-                    "$totalRatings تقييم",
+                    "$totalRatings " + "تقييم",
                     style: TextStyle(
                       color: AppColor.grey,
                       fontSize: 12,
@@ -309,7 +309,7 @@ class SellerRatingsView extends StatelessWidget {
 
     if (total == 0) {
       return Text(
-        "لا توجد تقييمات بعد",
+        "لا توجد تقييمات بعد".tr,
         style: TextStyle(color: AppColor.grey),
       );
     }
@@ -376,7 +376,7 @@ class SellerRatingsView extends StatelessWidget {
             ),
             SizedBox(height: 10),
             Text(
-              "لا توجد تقييمات بعد",
+              "لا توجد تقييمات بعد".tr,
               style: TextStyle(
                 fontSize: 16,
                 color: AppColor.grey,
@@ -391,7 +391,7 @@ class SellerRatingsView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "التقييمات (${ratings.length})",
+          "التقييمات".tr + " (${ratings.length})",
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -431,7 +431,7 @@ class SellerRatingsView extends StatelessWidget {
               CircleAvatar(
                 backgroundColor: AppColor.primaryColor,
                 child: Text(
-                  (rating.usersName ?? "مستخدم").substring(0, 1).toUpperCase(),
+                  (rating.usersName ?? "مستخدم".tr).substring(0, 1).toUpperCase(),
                   style: TextStyle(color: Colors.white),
                 ),
               ),
@@ -441,7 +441,7 @@ class SellerRatingsView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      rating.usersName ?? "مستخدم مجهول",
+                      rating.usersName ?? "مستخدم مجهول".tr,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
@@ -474,14 +474,14 @@ class SellerRatingsView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    "طلب #${rating.ordersId}",
+                    "طلب #".tr + "${rating.ordersId}",
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColor.grey,
                     ),
                   ),
                   Text(
-                    "${rating.ordersTotalprice ?? "0"} د.ع",
+                    "${rating.ordersTotalprice ?? "0"}" + "د.ع",
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColor.primaryColor,

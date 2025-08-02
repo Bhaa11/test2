@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/services/wallet_service.dart';
@@ -17,7 +18,7 @@ class _MyWalletState extends State<MyWallet> {
   double balance = 0.0;
   double pendingFees = 0.0;
   double effectiveBalance = 0.0;
-  String currency = "د.ع";
+  String currency = "د.ع".tr;
   String userName = "";
   bool isLoading = true;
   bool isDepositing = false; // متغير لتتبع حالة الإيداع
@@ -57,7 +58,7 @@ class _MyWalletState extends State<MyWallet> {
             balance = double.tryParse(data['wallet']['wallet_balance']?.toString() ?? '0') ?? 0.0;
             pendingFees = double.tryParse(data['wallet']['pending_fees']?.toString() ?? '0') ?? 0.0;
             effectiveBalance = double.tryParse(data['wallet']['effective_balance']?.toString() ?? '0') ?? 0.0;
-            userName = data['wallet']['users_name']?.toString() ?? 'المستخدم';
+            userName = data['wallet']['users_name']?.toString() ?? 'المستخدم'.tr;
 
             // تحويل المعاملات
             if (data['transactions'] != null && data['transactions'] is List) {
@@ -65,7 +66,7 @@ class _MyWalletState extends State<MyWallet> {
                 try {
                   return {
                     'id': transaction['transaction_id']?.toString() ?? '',
-                    'title': transaction['transaction_description']?.toString() ?? 'معاملة',
+                    'title': transaction['transaction_description']?.toString() ?? 'معاملة'.tr,
                     'amount': double.tryParse(transaction['transaction_amount']?.toString() ?? '0') ?? 0.0,
                     'date': DateTime.tryParse(transaction['transaction_created_at']?.toString() ?? '') ?? DateTime.now(),
                     'status': _getTransactionStatus(
@@ -77,10 +78,10 @@ class _MyWalletState extends State<MyWallet> {
                 } catch (e) {
                   return {
                     'id': '',
-                    'title': 'معاملة',
+                    'title': 'معاملة'.tr,
                     'amount': 0.0,
                     'date': DateTime.now(),
-                    'status': 'غير معروف',
+                    'status': 'غير معروف'.tr,
                     'type': ''
                   };
                 }
@@ -95,19 +96,19 @@ class _MyWalletState extends State<MyWallet> {
           setState(() {
             isLoading = false;
           });
-          _showErrorMessage('بيانات المحفظة غير متوفرة');
+          _showErrorMessage('بيانات المحفظة غير متوفرة'.tr);
         }
       } else {
         setState(() {
           isLoading = false;
         });
-        _showErrorMessage(result['message']?.toString() ?? 'حدث خطأ في تحميل البيانات');
+        _showErrorMessage(result['message']?.toString() ?? 'حدث خطأ في تحميل البيانات'.tr);
       }
     } catch (e) {
       setState(() {
         isLoading = false;
       });
-      _showErrorMessage('حدث خطأ في الاتصال: ${e.toString()}');
+      _showErrorMessage('حدث خطأ في الاتصال:'.tr + ' ${e.toString()}');
     }
   }
 
@@ -115,18 +116,18 @@ class _MyWalletState extends State<MyWallet> {
     if (status == 'completed') {
       switch (type) {
         case 'deposit':
-          return 'مكتمل';
+          return 'مكتمل'.tr;
         case 'payment':
-          return 'مدفوع';
+          return 'مدفوع'.tr;
         case 'refund':
-          return 'مسترد';
+          return 'مسترد'.tr;
         default:
-          return 'مكتمل';
+          return 'مكتمل'.tr;
       }
     } else if (status == 'pending') {
-      return 'معلق';
+      return 'معلق'.tr;
     } else {
-      return 'فاشل';
+      return 'فاشل'.tr;
     }
   }
 
@@ -135,7 +136,7 @@ class _MyWalletState extends State<MyWallet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE53935),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -147,7 +148,7 @@ class _MyWalletState extends State<MyWallet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: Colors.green,
+          backgroundColor: const Color(0xFFFFC107),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -157,31 +158,32 @@ class _MyWalletState extends State<MyWallet> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
-        title: const Text(
-          "المحفظة",
-          style: TextStyle(color: Colors.black, fontSize: 20),
+        backgroundColor: const Color(0xFFFFFFFF),
+        title:  Text(
+          "المحفظة".tr,
+          style: const TextStyle(color: Color(0xFF212121), fontSize: 20),
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF212121)),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black),
+            icon: const Icon(Icons.refresh, color: Color(0xFF212121)),
             onPressed: isDepositing ? null : _loadWalletData,
           ),
         ],
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFFFFC107)))
           : RefreshIndicator(
+        color: const Color(0xFFFFC107),
         onRefresh: _loadWalletData,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -211,15 +213,15 @@ class _MyWalletState extends State<MyWallet> {
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
           colors: isNegative
-              ? [const Color(0xFFE53935), const Color(0xFFD32F2F)]
-              : [const Color(0xFF43A047), const Color(0xFF2E7D32)],
+              ? [const Color(0xFFE53935), const Color(0xFFE53935)]
+              : [const Color(0xFFFFC107), const Color(0xFFFFAB00)],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: isNegative
-                ? Colors.red.withOpacity(0.3)
-                : Colors.green.withOpacity(0.3),
+                ? const Color(0xFFE53935).withOpacity(0.3)
+                : const Color(0xFFFFC107).withOpacity(0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -232,30 +234,30 @@ class _MyWalletState extends State<MyWallet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isNegative ? "الديون المستحقة" : "رصيدك الحالي",
+                isNegative ? "الديون المستحقة".tr : "رصيدك الحالي".tr,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: Color(0xFFFFFFFF),
                   fontSize: 16,
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: const Color(0xFFFFFFFF).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       isNegative ? Icons.warning : Icons.account_balance_wallet,
-                      color: Colors.white,
+                      color: const Color(0xFFFFFFFF),
                       size: 14,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isNegative ? "مدين" : "دائن",
+                      isNegative ? "مدين".tr : "دائن".tr,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Color(0xFFFFFFFF),
                         fontSize: 12,
                       ),
                     ),
@@ -272,7 +274,7 @@ class _MyWalletState extends State<MyWallet> {
                 child: Text(
                   isNegative ? _formatNumber(effectiveBalance.abs()) : _formatNumber(effectiveBalance),
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: Color(0xFFFFFFFF),
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                   ),
@@ -283,7 +285,7 @@ class _MyWalletState extends State<MyWallet> {
               Text(
                 currency,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: Color(0xFFFFFFFF),
                   fontSize: 20,
                 ),
               ),
@@ -292,18 +294,18 @@ class _MyWalletState extends State<MyWallet> {
           const SizedBox(height: 16),
           Container(
             height: 1,
-            color: Colors.white.withOpacity(0.2),
+            color: const Color(0xFFFFFFFF).withOpacity(0.2),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               const CircleAvatar(
                 radius: 15,
-                backgroundColor: Colors.white,
+                backgroundColor: Color(0xFFFFFFFF),
                 child: Icon(
                   Icons.person,
                   size: 18,
-                  color: Colors.blueGrey,
+                  color: Color(0xFF616161),
                 ),
               ),
               const SizedBox(width: 8),
@@ -311,16 +313,16 @@ class _MyWalletState extends State<MyWallet> {
                 child: Text(
                   userName,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: Color(0xFFFFFFFF),
                     fontSize: 14,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Text(
-                "تم التحديث",
-                style: TextStyle(
-                  color: Colors.white70,
+              Text(
+                "تم التحديث".tr,
+                style: const TextStyle(
+                  color: Color(0xFFFFFFFF),
                   fontSize: 12,
                 ),
               ),
@@ -328,7 +330,7 @@ class _MyWalletState extends State<MyWallet> {
               Text(
                 DateFormat('hh:mm a').format(DateTime.now()),
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: Color(0xFFFFFFFF),
                   fontSize: 12,
                 ),
               ),
@@ -345,33 +347,33 @@ class _MyWalletState extends State<MyWallet> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.orange[50],
+        color: const Color(0xFFFFF3E0),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange[200]!),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
       ),
       child: Row(
         children: [
-          Icon(Icons.warning_amber, color: Colors.orange[600], size: 24),
+          const Icon(Icons.warning_amber, color: Color(0xFFFFAB00), size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "رسوم مستحقة",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                Text(
+                  "رسوم مستحقة".tr,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 Text(
                   "${_formatNumber(pendingFees)} $currency",
-                  style: TextStyle(color: Colors.orange[700], fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: Color(0xFFFFAB00), fontWeight: FontWeight.bold),
                 ),
               ],
             ),
           ),
           Flexible(
             child: Text(
-              "سيتم الخصم تلقائياً عند الإيداع",
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              "سيتم الخصم تلقائياً عند الإيداع".tr,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF616161)),
               textAlign: TextAlign.end,
             ),
           ),
@@ -390,7 +392,7 @@ class _MyWalletState extends State<MyWallet> {
           _showDepositDialog();
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: isDepositing ? Colors.grey : Colors.green,
+          backgroundColor: isDepositing ? const Color(0xFF9E9E9E) : const Color(0xFFFFC107),
           padding: const EdgeInsets.symmetric(vertical: 15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -398,39 +400,39 @@ class _MyWalletState extends State<MyWallet> {
           elevation: 2,
         ),
         child: isDepositing
-            ? const Row(
+            ?  Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(
+            const SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFFFFF)),
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Text(
-              "جاري المعالجة...",
-              style: TextStyle(
+              "جاري المعالجة...".tr,
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Color(0xFFFFFFFF),
               ),
             ),
           ],
         )
-            : const Row(
+            : Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_circle_outline, color: Colors.white),
-            SizedBox(width: 8),
+            const Icon(Icons.add_circle_outline, color: Color(0xFFFFFFFF)),
+            const SizedBox(width: 8),
             Text(
-              "إيداع رصيد",
-              style: TextStyle(
+              "إيداع رصيد".tr,
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Color(0xFFFFFFFF),
               ),
             ),
           ],
@@ -446,18 +448,18 @@ class _MyWalletState extends State<MyWallet> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            "المعاملات السابقة",
-            style: TextStyle(
+          Text(
+            "المعاملات السابقة".tr,
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
           Text(
-            "${transactions.length} معاملة",
-            style: TextStyle(
+            "${transactions.length} " + "معاملة".tr,
+            style: const TextStyle(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: Color(0xFF616161),
             ),
           ),
         ],
@@ -472,17 +474,17 @@ class _MyWalletState extends State<MyWallet> {
         padding: const EdgeInsets.all(32),
         child: Column(
           children: [
-            Icon(
+            const Icon(
               Icons.receipt_long,
               size: 64,
-              color: Colors.grey[400],
+              color: Color(0xFF9E9E9E),
             ),
             const SizedBox(height: 16),
             Text(
-              "لا توجد معاملات",
-              style: TextStyle(
+              "لا توجد معاملات".tr,
+              style: const TextStyle(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: Color(0xFF616161),
               ),
             ),
           ],
@@ -524,11 +526,11 @@ class _MyWalletState extends State<MyWallet> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color(0xFF212121).withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -540,12 +542,12 @@ class _MyWalletState extends State<MyWallet> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isPositive ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+              color: isPositive ? const Color(0xFFFFC107).withOpacity(0.1) : const Color(0xFFE53935).withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               getIconByType(),
-              color: isPositive ? Colors.green : Colors.red,
+              color: isPositive ? const Color(0xFFFFC107) : const Color(0xFFE53935),
             ),
           ),
           const SizedBox(width: 14),
@@ -555,7 +557,7 @@ class _MyWalletState extends State<MyWallet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  transaction["title"]?.toString() ?? "معاملة",
+                  transaction["title"]?.toString() ?? "معاملة".tr,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
@@ -565,8 +567,8 @@ class _MyWalletState extends State<MyWallet> {
                 const SizedBox(height: 4),
                 Text(
                   DateFormat('dd MMMM، yyyy - hh:mm a').format(transaction["date"] ?? DateTime.now()),
-                  style: TextStyle(
-                    color: Colors.grey[600],
+                  style: const TextStyle(
+                    color: Color(0xFF616161),
                     fontSize: 12,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -581,7 +583,7 @@ class _MyWalletState extends State<MyWallet> {
               Text(
                 "${isPositive ? '+' : ''}${_formatNumber(transaction["amount"] ?? 0.0)} $currency",
                 style: TextStyle(
-                  color: isPositive ? Colors.green[600] : Colors.red[600],
+                  color: isPositive ? const Color(0xFFFFC107) : const Color(0xFFE53935),
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
@@ -591,13 +593,13 @@ class _MyWalletState extends State<MyWallet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: const Color(0xFFF5F5F5),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  transaction["status"]?.toString() ?? "غير معروف",
-                  style: TextStyle(
-                    color: Colors.grey[700],
+                  transaction["status"]?.toString() ?? "غير معروف".tr,
+                  style: const TextStyle(
+                    color: Color(0xFF616161),
                     fontSize: 10,
                   ),
                 ),
@@ -628,7 +630,7 @@ class _MyWalletState extends State<MyWallet> {
             return Container(
               height: MediaQuery.of(context).size.height * 0.85,
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: Color(0xFFFFFFFF),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(28),
                   topRight: Radius.circular(28),
@@ -642,7 +644,7 @@ class _MyWalletState extends State<MyWallet> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: const Color(0xFFE0E0E0),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -657,34 +659,34 @@ class _MyWalletState extends State<MyWallet> {
                           height: 48,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF00C853), Color(0xFF4CAF50)],
+                              colors: [Color(0xFFFFC107), Color(0xFFFFAB00)],
                             ),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: const Icon(
                             Icons.account_balance_wallet_outlined,
-                            color: Colors.white,
+                            color: Color(0xFFFFFFFF),
                             size: 24,
                           ),
                         ),
                         const SizedBox(width: 16),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "إيداع رصيد",
-                                style: TextStyle(
+                                "إيداع رصيد".tr,
+                                style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1A1A1A),
+                                  color: Color(0xFF212121),
                                 ),
                               ),
                               Text(
-                                "اختر المبلغ المناسب لك",
-                                style: TextStyle(
+                                "اختر المبلغ المناسب لك".tr,
+                                style: const TextStyle(
                                   fontSize: 14,
-                                  color: Color(0xFF666666),
+                                  color: Color(0xFF616161),
                                 ),
                               ),
                             ],
@@ -697,13 +699,13 @@ class _MyWalletState extends State<MyWallet> {
                           icon: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
+                              color: const Color(0xFFF5F5F5),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
                               Icons.close,
                               size: 20,
-                              color: Color(0xFF666666),
+                              color: Color(0xFF616161),
                             ),
                           ),
                         ),
@@ -718,12 +720,12 @@ class _MyWalletState extends State<MyWallet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Quick amounts
-                          const Text(
-                            "المبالغ السريعة",
-                            style: TextStyle(
+                          Text(
+                            "المبالغ السريعة".tr,
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A1A1A),
+                              color: Color(0xFF212121),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -754,10 +756,10 @@ class _MyWalletState extends State<MyWallet> {
                                   decoration: BoxDecoration(
                                     gradient: isSelected
                                         ? const LinearGradient(
-                                      colors: [Color(0xFF00C853), Color(0xFF4CAF50)],
+                                      colors: [Color(0xFFFFC107), Color(0xFFFFAB00)],
                                     )
                                         : null,
-                                    color: isSelected ? null : const Color(0xFFF8F9FA),
+                                    color: isSelected ? null : const Color(0xFFFAFAFA),
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
                                       color: isSelected
@@ -768,7 +770,7 @@ class _MyWalletState extends State<MyWallet> {
                                     boxShadow: isSelected
                                         ? [
                                       BoxShadow(
-                                        color: const Color(0xFF00C853).withOpacity(0.3),
+                                        color: const Color(0xFFFFC107).withOpacity(0.3),
                                         blurRadius: 12,
                                         offset: const Offset(0, 4),
                                       ),
@@ -776,7 +778,7 @@ class _MyWalletState extends State<MyWallet> {
                                         : null,
                                   ),
                                   child: Center(
-                                    child: Column(
+                                    child: Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Text(
@@ -785,17 +787,18 @@ class _MyWalletState extends State<MyWallet> {
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
                                             color: isSelected
-                                                ? Colors.white
-                                                : const Color(0xFF1A1A1A),
+                                                ? const Color(0xFFFFFFFF)
+                                                : const Color(0xFF212121),
                                           ),
                                         ),
+                                        const SizedBox(width: 5),
                                         Text(
                                           currency,
                                           style: TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 16,
                                             color: isSelected
-                                                ? Colors.white.withOpacity(0.8)
-                                                : const Color(0xFF666666),
+                                                ? const Color(0xFFFFFFFF).withOpacity(0.8)
+                                                : const Color(0xFF616161),
                                           ),
                                         ),
                                       ],
@@ -809,19 +812,19 @@ class _MyWalletState extends State<MyWallet> {
                           const SizedBox(height: 32),
 
                           // Custom amount
-                          const Text(
-                            "مبلغ مخصص",
-                            style: TextStyle(
+                          Text(
+                            "مبلغ مخصص".tr,
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A1A1A),
+                              color: Color(0xFF212121),
                             ),
                           ),
                           const SizedBox(height: 16),
 
                           Container(
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8F9FA),
+                              color: const Color(0xFFFAFAFA),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: const Color(0xFFE0E0E0),
@@ -847,12 +850,12 @@ class _MyWalletState extends State<MyWallet> {
                                       width: 32,
                                       height: 32,
                                       decoration: BoxDecoration(
-                                        color: Colors.red[50],
+                                        color: const Color(0xFFFFEBEE),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: Icon(
+                                      child: const Icon(
                                         Icons.remove,
-                                        color: Colors.red[600],
+                                        color: Color(0xFFE53935),
                                         size: 20,
                                       ),
                                     ),
@@ -869,18 +872,18 @@ class _MyWalletState extends State<MyWallet> {
                                     style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF1A1A1A),
+                                      color: Color(0xFF212121),
                                     ),
                                     decoration: InputDecoration(
                                       hintText: "1000",
-                                      hintStyle: TextStyle(
-                                        color: Colors.grey[400],
+                                      hintStyle: const TextStyle(
+                                        color: Color(0xFF9E9E9E),
                                         fontSize: 20,
                                       ),
                                       border: InputBorder.none,
                                       suffixText: currency,
                                       suffixStyle: const TextStyle(
-                                        color: Color(0xFF666666),
+                                        color: Color(0xFF616161),
                                         fontWeight: FontWeight.w500,
                                         fontSize: 16,
                                       ),
@@ -908,12 +911,12 @@ class _MyWalletState extends State<MyWallet> {
                                       width: 32,
                                       height: 32,
                                       decoration: BoxDecoration(
-                                        color: Colors.green[50],
+                                        color: const Color(0xFFFFF3E0),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: Icon(
+                                      child: const Icon(
                                         Icons.add,
-                                        color: Colors.green[600],
+                                        color: Color(0xFFFFC107),
                                         size: 20,
                                       ),
                                     ),
@@ -928,17 +931,17 @@ class _MyWalletState extends State<MyWallet> {
                           // Minimum amount info
                           Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.info_outline,
                                 size: 16,
-                                color: Colors.grey[600],
+                                color: Color(0xFF616161),
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                "الحد الأدنى للإيداع: ${NumberFormat('#,###').format(minAmount.toInt())} $currency",
-                                style: TextStyle(
+                                "الحد الأدنى للإيداع:".tr + " ${NumberFormat('#,###').format(minAmount.toInt())} $currency",
+                                style: const TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey[600],
+                                  color: Color(0xFF616161),
                                 ),
                               ),
                             ],
@@ -952,13 +955,13 @@ class _MyWalletState extends State<MyWallet> {
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  const Color(0xFF2196F3).withOpacity(0.1),
+                                  const Color(0xFF1976D2).withOpacity(0.1),
                                   const Color(0xFF1976D2).withOpacity(0.05),
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: const Color(0xFF2196F3).withOpacity(0.2),
+                                color: const Color(0xFF1976D2).withOpacity(0.2),
                               ),
                             ),
                             child: Column(
@@ -966,11 +969,11 @@ class _MyWalletState extends State<MyWallet> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text(
-                                      "الرصيد الحالي",
-                                      style: TextStyle(
+                                    Text(
+                                      "الرصيد الحالي".tr,
+                                      style: const TextStyle(
                                         fontSize: 14,
-                                        color: Color(0xFF666666),
+                                        color: Color(0xFF616161),
                                       ),
                                     ),
                                     Text(
@@ -978,7 +981,7 @@ class _MyWalletState extends State<MyWallet> {
                                       style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF1A1A1A),
+                                        color: Color(0xFF212121),
                                       ),
                                     ),
                                   ],
@@ -988,11 +991,11 @@ class _MyWalletState extends State<MyWallet> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      const Text(
-                                        "رسوم مستحقة",
-                                        style: TextStyle(
+                                      Text(
+                                        "رسوم مستحقة".tr,
+                                        style: const TextStyle(
                                           fontSize: 14,
-                                          color: Color(0xFF666666),
+                                          color: Color(0xFF616161),
                                         ),
                                       ),
                                       Text(
@@ -1018,27 +1021,27 @@ class _MyWalletState extends State<MyWallet> {
                                 color: const Color(0xFFFFF3E0),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: const Color(0xFFFFB74D).withOpacity(0.3),
+                                  color: const Color(0xFFFFC107).withOpacity(0.3),
                                 ),
                               ),
                               child: Row(
                                 children: [
-                                  SizedBox(
+                                  const SizedBox(
                                     width: 24,
                                     height: 24,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2.5,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.orange[600]!),
+                                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFAB00)),
                                     ),
                                   ),
                                   const SizedBox(width: 16),
-                                  const Expanded(
+                                  Expanded(
                                     child: Text(
-                                      "جاري معالجة العملية، يرجى الانتظار...",
-                                      style: TextStyle(
+                                      "جاري معالجة العملية، يرجى الانتظار...".tr,
+                                      style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
-                                        color: Color(0xFF1A1A1A),
+                                        color: Color(0xFF212121),
                                       ),
                                     ),
                                   ),
@@ -1056,11 +1059,11 @@ class _MyWalletState extends State<MyWallet> {
                   // Bottom action
                   Container(
                     padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFFFFFF),
                       border: Border(
                         top: BorderSide(
-                          color: Colors.grey[200]!,
+                          color: Color(0xFFE0E0E0),
                           width: 1,
                         ),
                       ),
@@ -1084,7 +1087,7 @@ class _MyWalletState extends State<MyWallet> {
                                   final result = await WalletService.depositMoney(
                                       widget.userId,
                                       amount,
-                                      "تم إيداع رصيد"
+                                      "تم إيداع رصيد".tr
                                   );
 
                                   if (Navigator.canPop(context)) {
@@ -1092,33 +1095,33 @@ class _MyWalletState extends State<MyWallet> {
                                   }
 
                                   if (result['status'] == 'success') {
-                                    _showSuccessMessage(result['message']?.toString() ?? 'تم إيداع المبلغ بنجاح');
+                                    _showSuccessMessage(result['message']?.toString() ?? 'تم إيداع المبلغ بنجاح'.tr);
                                     await _loadWalletData();
                                   } else {
-                                    _showErrorMessage(result['message']?.toString() ?? 'فشل في إيداع المبلغ');
+                                    _showErrorMessage(result['message']?.toString() ?? 'فشل في إيداع المبلغ'.tr);
                                   }
                                 } catch (e) {
                                   if (Navigator.canPop(context)) {
                                     Navigator.pop(context);
                                   }
-                                  _showErrorMessage('حدث خطأ أثناء العملية: ${e.toString()}');
+                                  _showErrorMessage('حدث خطأ أثناء العملية:'.tr + ' ${e.toString()}');
                                 } finally {
                                   setState(() {
                                     isDepositing = false;
                                   });
                                 }
                               } else {
-                                _showErrorMessage('الحد الأدنى للإيداع هو ${NumberFormat('#,###').format(minAmount.toInt())} $currency');
+                                _showErrorMessage('الحد الأدنى للإيداع هو'.tr + ' ${NumberFormat('#,###').format(minAmount.toInt())} $currency');
                               }
                             } else {
-                              _showErrorMessage('يرجى إدخال المبلغ');
+                              _showErrorMessage('يرجى إدخال المبلغ'.tr);
                             }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: isDepositing
-                                ? Colors.grey[400]
-                                : const Color(0xFF00C853),
-                            foregroundColor: Colors.white,
+                                ? const Color(0xFF9E9E9E)
+                                : const Color(0xFFFFC107),
+                            foregroundColor: const Color(0xFFFFFFFF),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -1130,12 +1133,12 @@ class _MyWalletState extends State<MyWallet> {
                             height: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFFFFF)),
                             ),
                           )
-                              : const Text(
-                            "إيداع الآن",
-                            style: TextStyle(
+                              : Text(
+                            "إيداع الآن".tr,
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
