@@ -7,6 +7,6 @@ workflows:
     scripts:
       - flutter clean
       - flutter pub get
-      - flutter build ios --simulator --release
+      - flutter build ios --simulator  # تم حذف --release
     artifacts:
       - build/ios/iphonesimulator/Runner.app
