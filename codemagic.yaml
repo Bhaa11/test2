@@ -5,8 +5,15 @@ workflows:
       flutter: 3.27.3
       xcode: 16.2
     scripts:
+      - echo "=== Starting build ==="
+      - flutter --version
+      - flutter doctor
+      - echo "=== Cleaning project ==="
       - flutter clean
+      - echo "=== Getting dependencies ==="
       - flutter pub get
-      - flutter build ios --simulator  # تم حذف --release
+      - echo "=== Building iOS ==="
+      - flutter build ios --simulator --verbose
+      - echo "=== Build completed ==="
     artifacts:
       - build/ios/iphonesimulator/Runner.app
