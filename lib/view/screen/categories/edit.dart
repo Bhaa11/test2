@@ -1,4 +1,3 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -60,7 +59,15 @@ class CategoriesEdit extends StatelessWidget {
                               child: Text("Choose Category Image"))),
 
                       if (controller.file != null)
-                        SvgPicture.file(controller.file!),
+                        FutureBuilder<String>(
+                          future: controller.file!.readAsString(),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              return SvgPicture.string(snapshot.data!);
+                            }
+                            return CircularProgressIndicator();
+                          },
+                        ),
                       CustomButton(
                         text: "حفض",
                         onPressed: () {
